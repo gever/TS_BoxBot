@@ -11,6 +11,10 @@
 #include <SPIFFS.h>
 #include "util.h"
 
+// setting up lisp runtime
+#include "lisp.h"
+typedef Lisp<8192,2048> MySmallLisp;
+
 #define SDEBUG(label, x) {Serial.print(label); Serial.println(x);}
 #define ABS(x) ((x<0) ? (-x) : (x))
 
@@ -165,7 +169,7 @@ void setup_move(bool dir, int dist) {
 /*
    set up a turn command
 */
-void setup_turn(int dir, int angle) {
+void setup_turn(bool dir, int angle) {
   step_count = boxbot_turn_steps * (((float)angle) / 360.0f) * linear_turn_fudge;
   if (dir) {
     m1.set_direction(1);
@@ -323,6 +327,58 @@ void handlePlan() {
   }
 }
 
+typedef Lisp<8192,2048> MySmallLisp;
+MySmallLisp lisp;
+void lispSetup() {
+  char buf[4096];
+  File f = SPIFFS.open("/init.lisp", "r");
+  if (!f) {
+    Serial.println("ERR: Failed to open init.lisp");
+    return;
+  }
+  f.readBytes(buf, sizeof(buf));
+  f.close();
+  lisp.input_from_buffer(buf);
+}
+
+void eval_code(const char *code) {
+  lisp.unwind();
+  lisp.input_from_buffer(code);
+  lisp.eval(*lisp.push(lisp.read()), lisp.env);  
+  // lisp.print(lisp.eval(*lisp.push(lisp.read()), lisp.env));
+}
+
+void handleLisp() {
+  if (server.args()) {
+    const String label = "code";
+    if (server.hasArg( label )) {
+      // TODO: configure the lisp input to come from the form field
+      String script = server.arg( label );
+      eval_code(script.c_str());
+    }
+  }
+  handleLandingPage();
+}
+
+// handle request for static page content
+void handlePageRequest() {
+  char page_buffer[1024*2];
+  String url = server.uri();
+  Serial.println("handlePageRequest: " + url);
+  File file = SPIFFS.open(url, "r");
+  if (!file) {
+    Serial.println("file open failed");
+    server.send(404, "text/plain", "file not found");
+    return;
+  }
+  int bytes_read = file.readBytes(page_buffer, sizeof(page_buffer));
+  Serial.println("bytes_read: " + String(bytes_read));
+  file.close();
+  // server.streamFile(file, "text/html");
+  Serial.println(page_buffer);
+  server.send(200, "text/html", page_buffer);
+}
+
 void execute_plan() {
   // only parse/setup next statement in the plan if we have finished the previous step
   if (plan_ready && (step_count == 0)) {
@@ -346,8 +402,30 @@ void execute_plan() {
   }
 }
 
+void list_files() {
+  File root = SPIFFS.open("/");
+  File file = root.openNextFile();
+  while(file){
+    Serial.print("  FILE: ");
+    Serial.println(file.name());
+    file = root.openNextFile();
+  }
+}
+
 void setup() {
+  bool spiffs_ok = false;
+
   Serial.begin(115200);
+  while(!Serial) { delay(10); } // wait for serial port to connect. Needed for native USB port only
+
+  Serial.println("\n\nBoxbot v0.1 --------");
+  if (!SPIFFS.begin(true)) {
+    Serial.println("ERR: SPIFFS Mount Failed");
+    spiffs_ok = false;
+  } else {
+    Serial.println("SPIFFS Mount OK");
+    spiffs_ok = true;
+  }
 
   Serial.println("Configuring access point...");
   WiFi.softAP(ssid);
@@ -356,11 +434,14 @@ void setup() {
   Serial.print("AP IP address: ");
   Serial.println(myIP);
 
+  Serial.println("Configuring server...");
   server.on("/", handleLandingPage);
   server.on("/move", handleMove);   // immediate move
   server.on("/turn", handleTurn);   // immediate turn
   server.on("/stop", handleStop);   // immediate stop (of everything)
   server.on("/plan", handlePlan);     // run multiple commands (BUCL script)
+  server.on("/lisp_code", handleLisp);   // execute lisp fragment (for testing)
+  server.on("/lisp.html", handlePageRequest);
   server.on("/index.html", handleLandingPage);
   server.on("/style.css", handleStyleCss);
   server.on("/script.js", handleScriptJs);
@@ -369,12 +450,19 @@ void setup() {
   server.on("/save", handleSave);
   server.onNotFound(handleNotFound);
 
+  // initialize lisp
+  Serial.println("Configuring lisp...");
+  lispSetup();
+
+  Serial.println("Starting server...");
   server.begin();
 
   // set up the motor step timer
+  Serial.println("Starting motors...");
   setup_timer( );
 
-  Serial.println("Server started");
+  // see what's on the filesystem
+  list_files();
 }
 
 void loop() {
