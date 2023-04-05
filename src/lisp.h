@@ -863,7 +863,9 @@ FILE *out;
 protected:
 
 /* evaluation mode of a primitive */
-static const uint8_t NORMAL = 0, SPECIAL = 1, TAILCALL = 2;
+static const uint8_t L_NORMAL = 0;
+static const uint8_t L_SPECIAL = 1;
+static const uint8_t L_TAILCALL = 2;
 
 /* table of Lisp primitives, each has a name s, a function pointer f, and an evaluation mode m */
 inline static const struct {
@@ -871,50 +873,50 @@ inline static const struct {
   std::function<L(This&,L,L*)> f;
   uint8_t m;
 } prim[45] = {
-  {"type",     &This::f_type,    NORMAL},           /* (type x) => <type> value between -1 and 7 */
-  {"eval",     &This::f_ident,   NORMAL|TAILCALL},  /* (eval <quoted-expr>) => <value-of-expr> */
-  {"quote",    &This::f_ident,   SPECIAL},          /* (quote <expr>) => <expr> -- protect <expr> from evaluation */
-  {"cons",     &This::f_cons,    NORMAL},           /* (cons x y) => (x . y) -- construct a pair */
-  {"car",      &This::f_car,     NORMAL},           /* (car <pair>) => x -- "deconstruct" <pair> (x . y) */
-  {"cdr",      &This::f_cdr,     NORMAL},           /* (cdr <pair>) => y -- "deconstruct" <pair> (x . y) */
-  {"+",        &This::f_add,     NORMAL},           /* (+ n1 n2 ... nk) => n1+n2+...+nk */
-  {"-",        &This::f_sub,     NORMAL},           /* (- n1 n2 ... nk) => n1-n2-...-nk or -n1 if k=1 */
-  {"*",        &This::f_mul,     NORMAL},           /* (* n1 n2 ... nk) => n1*n2*...*nk */
-  {"/",        &This::f_div,     NORMAL},           /* (/ n1 n2 ... nk) => n1/n2/.../nk or 1/n1 if k=1 */
-  {"int",      &This::f_int,     NORMAL},           /* (int <integer.frac>) => <integer> */
-  {"<",        &This::f_lt,      NORMAL},           /* (< n1 n2) => #t if n1<n2 else () */
-  {"eq?",      &This::f_eq,      NORMAL},           /* (eq? x y) => #t if x==y else () */
-  {"not",      &This::f_not,     NORMAL},           /* (not x) => #t if x==() else ()t */
-  {"or",       &This::f_or,      SPECIAL},          /* (or x1 x2 ... xk) => #t if any x1 is not () else () */
-  {"and",      &This::f_and,     SPECIAL},          /* (and x1 x2 ... xk) => #t if all x1 are not () else () */
-  {"begin",    &This::f_begin,   SPECIAL|TAILCALL}, /* (begin x1 x2 ... xk) => xk -- evaluates x1, x2 to xk */
-  {"while",    &This::f_while,   SPECIAL},          /* (while x y1 y2 ... yk) -- while x is not () eval y1, y2 ... yk */
-  {"cond",     &This::f_cond,    SPECIAL|TAILCALL}, /* (cond (x1 y1) (x2 y2) ... (xk yk)) => yi for first xi!=() */
-  {"if",       &This::f_if,      SPECIAL|TAILCALL}, /* (if x y z) => if x!=() then y else z */
-  {"lambda",   &This::f_lambda,  SPECIAL},          /* (lambda <parameters> <expr>) => {closure} */
-  {"macro",    &This::f_macro,   SPECIAL},          /* (macro <parameters> <expr>) => [macro] */
-  {"define",   &This::f_define,  SPECIAL},          /* (define <symbol> <expr>) -- globally defines <symbol> */
-  {"assoc",    &This::f_assoc,   NORMAL},           /* (assoc <quoted-symbol> <environment>) => <value-of-symbol> */
-  {"env",      &This::f_env,     NORMAL},           /* (env) => <environment> */
-  {"let",      &This::f_let,     SPECIAL|TAILCALL}, /* (let (v1 x1) (v2 x2) ... (vk xk) y) => y with scope */
-  {"let*",     &This::f_leta,    SPECIAL|TAILCALL}, /* (let* (v1 x1) (v2 x2) ... (vk xk) y) => y with scope */
-  {"letrec",   &This::f_letrec,  SPECIAL|TAILCALL}, /* (letrec (v1 x1) (v2 x2) ... (vk xk) y) => y recursive scope */
-  {"letrec*",  &This::f_letreca, SPECIAL|TAILCALL}, /* (letrec* (v1 x1) (v2 x2) ... (vk xk) y) => y recursive scope */
-  {"setq",     &This::f_setq,    SPECIAL},          /* (setq <symbol> x) -- changes value of <symbol> in scope to x */
-  {"set-car!", &This::f_setcar,  NORMAL},           /* (set-car! <pair> x) -- changes car of <pair> to x in memory */
-  {"set-cdr!", &This::f_setcdr,  NORMAL},           /* (set-cdr! <pair> y) -- changes cdr of <pair> to y in memory */
-  {"read",     &This::f_read,    NORMAL},           /* (read) => <value-of-input> */
-  {"print",    &This::f_print,   NORMAL},           /* (print x1 x2 ... xk) => () -- prints the values x1 x2 ... xk */
-  {"println",  &This::f_println, NORMAL},           /* (println x1 x2 ... xk) => () -- prints with newline */
-  {"write",    &This::f_write,   NORMAL},           /* (write x1 x2 ... xk) => () -- prints without quoting strings */
-  {"string",   &This::f_string,  NORMAL},           /* (string x1 x2 ... xk) => <string> -- string of x1 x2 ... xk */
-  {"load",     &This::f_load,    NORMAL},           /* (load <name>) -- loads file <name> (an atom or string name) */
-  {"trace",    &This::f_trace,   SPECIAL},          /* (trace flag [<expr>]) -- flag 0=off, 1=on, 2=keypress */
-  {"catch",    &This::f_catch,   SPECIAL},          /* (catch <expr>) => <value-of-expr> if no except. else (ERR . n) */
-  {"throw",    &This::f_throw,   NORMAL},           /* (throw n) -- raise exception error code n (integer != 0) */
-  {"quit",     &This::f_quit,    NORMAL},           /* (quit) -- bye! */
-  {"boxbot_move",   &This::f_boxbot_move,    NORMAL},
-  {"boxbot_turn",   &This::f_boxbot_turn,    NORMAL},
+  {"type",     &This::f_type,    L_NORMAL},           /* (type x) => <type> value between -1 and 7 */
+  {"eval",     &This::f_ident,   L_NORMAL|L_TAILCALL},  /* (eval <quoted-expr>) => <value-of-expr> */
+  {"quote",    &This::f_ident,   L_SPECIAL},          /* (quote <expr>) => <expr> -- protect <expr> from evaluation */
+  {"cons",     &This::f_cons,    L_NORMAL},           /* (cons x y) => (x . y) -- construct a pair */
+  {"car",      &This::f_car,     L_NORMAL},           /* (car <pair>) => x -- "deconstruct" <pair> (x . y) */
+  {"cdr",      &This::f_cdr,     L_NORMAL},           /* (cdr <pair>) => y -- "deconstruct" <pair> (x . y) */
+  {"+",        &This::f_add,     L_NORMAL},           /* (+ n1 n2 ... nk) => n1+n2+...+nk */
+  {"-",        &This::f_sub,     L_NORMAL},           /* (- n1 n2 ... nk) => n1-n2-...-nk or -n1 if k=1 */
+  {"*",        &This::f_mul,     L_NORMAL},           /* (* n1 n2 ... nk) => n1*n2*...*nk */
+  {"/",        &This::f_div,     L_NORMAL},           /* (/ n1 n2 ... nk) => n1/n2/.../nk or 1/n1 if k=1 */
+  {"int",      &This::f_int,     L_NORMAL},           /* (int <integer.frac>) => <integer> */
+  {"<",        &This::f_lt,      L_NORMAL},           /* (< n1 n2) => #t if n1<n2 else () */
+  {"eq?",      &This::f_eq,      L_NORMAL},           /* (eq? x y) => #t if x==y else () */
+  {"not",      &This::f_not,     L_NORMAL},           /* (not x) => #t if x==() else ()t */
+  {"or",       &This::f_or,      L_SPECIAL},          /* (or x1 x2 ... xk) => #t if any x1 is not () else () */
+  {"and",      &This::f_and,     L_SPECIAL},          /* (and x1 x2 ... xk) => #t if all x1 are not () else () */
+  {"begin",    &This::f_begin,   L_SPECIAL|L_TAILCALL}, /* (begin x1 x2 ... xk) => xk -- evaluates x1, x2 to xk */
+  {"while",    &This::f_while,   L_SPECIAL},          /* (while x y1 y2 ... yk) -- while x is not () eval y1, y2 ... yk */
+  {"cond",     &This::f_cond,    L_SPECIAL|L_TAILCALL}, /* (cond (x1 y1) (x2 y2) ... (xk yk)) => yi for first xi!=() */
+  {"if",       &This::f_if,      L_SPECIAL|L_TAILCALL}, /* (if x y z) => if x!=() then y else z */
+  {"lambda",   &This::f_lambda,  L_SPECIAL},          /* (lambda <parameters> <expr>) => {closure} */
+  {"macro",    &This::f_macro,   L_SPECIAL},          /* (macro <parameters> <expr>) => [macro] */
+  {"define",   &This::f_define,  L_SPECIAL},          /* (define <symbol> <expr>) -- globally defines <symbol> */
+  {"assoc",    &This::f_assoc,   L_NORMAL},           /* (assoc <quoted-symbol> <environment>) => <value-of-symbol> */
+  {"env",      &This::f_env,     L_NORMAL},           /* (env) => <environment> */
+  {"let",      &This::f_let,     L_SPECIAL|L_TAILCALL}, /* (let (v1 x1) (v2 x2) ... (vk xk) y) => y with scope */
+  {"let*",     &This::f_leta,    L_SPECIAL|L_TAILCALL}, /* (let* (v1 x1) (v2 x2) ... (vk xk) y) => y with scope */
+  {"letrec",   &This::f_letrec,  L_SPECIAL|L_TAILCALL}, /* (letrec (v1 x1) (v2 x2) ... (vk xk) y) => y recursive scope */
+  {"letrec*",  &This::f_letreca, L_SPECIAL|L_TAILCALL}, /* (letrec* (v1 x1) (v2 x2) ... (vk xk) y) => y recursive scope */
+  {"setq",     &This::f_setq,    L_SPECIAL},          /* (setq <symbol> x) -- changes value of <symbol> in scope to x */
+  {"set-car!", &This::f_setcar,  L_NORMAL},           /* (set-car! <pair> x) -- changes car of <pair> to x in memory */
+  {"set-cdr!", &This::f_setcdr,  L_NORMAL},           /* (set-cdr! <pair> y) -- changes cdr of <pair> to y in memory */
+  {"read",     &This::f_read,    L_NORMAL},           /* (read) => <value-of-input> */
+  {"print",    &This::f_print,   L_NORMAL},           /* (print x1 x2 ... xk) => () -- prints the values x1 x2 ... xk */
+  {"println",  &This::f_println, L_NORMAL},           /* (println x1 x2 ... xk) => () -- prints with newline */
+  {"write",    &This::f_write,   L_NORMAL},           /* (write x1 x2 ... xk) => () -- prints without quoting strings */
+  {"string",   &This::f_string,  L_NORMAL},           /* (string x1 x2 ... xk) => <string> -- string of x1 x2 ... xk */
+  {"load",     &This::f_load,    L_NORMAL},           /* (load <name>) -- loads file <name> (an atom or string name) */
+  {"trace",    &This::f_trace,   L_SPECIAL},          /* (trace flag [<expr>]) -- flag 0=off, 1=on, 2=keypress */
+  {"catch",    &This::f_catch,   L_SPECIAL},          /* (catch <expr>) => <value-of-expr> if no except. else (ERR . n) */
+  {"throw",    &This::f_throw,   L_NORMAL},           /* (throw n) -- raise exception error code n (integer != 0) */
+  {"quit",     &This::f_quit,    L_NORMAL},           /* (quit) -- bye! */
+  {"boxbot_move",   &This::f_boxbot_move,    L_NORMAL},
+  {"boxbot_turn",   &This::f_boxbot_turn,    L_NORMAL},
   {0}
 };
 
@@ -960,12 +962,12 @@ L step(L x, L e) {
     x = cdr(x);                                 /* ... and its actual arguments are the rest of the list */
     if (T(*f) == PRIM) {                        /* if f is a primitive, then apply it to the actual arguments x */
       I i = ord(*f);
-      if (!(prim[i].m & SPECIAL))               /* if the primitive is NORMAL mode, */
+      if (!(prim[i].m & L_SPECIAL))               /* if the primitive is L_NORMAL mode, */
         x = evlis(x, e);                        /* ... then evaluate actual arguments x */
       *z = e;
       x = *y = prim[i].f(*this, x, z);          /* call the primitive with arguments x, put return value back in x */
       e = *z;                                   /* the new environment e is d to evaluate x, put in *z to protect */
-      if (prim[i].m & TAILCALL)                 /* if the primitive is TAILCALL mode, */
+      if (prim[i].m & L_TAILCALL)                 /* if the primitive is L_TAILCALL mode, */
         continue;                               /* ... then continue evaluating x */
       break;                                    /* else break to return value x */
     }
