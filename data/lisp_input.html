@@ -6,8 +6,16 @@
     </head>
     <body>
         <h1>Input</h1>
-        <form action="/lisp" method="post">
-            <p>code:<input type="textarea" name="code"/></p>
+        <form action="/lisp_code" method="post">
+            <!-- text area for editing code in the browser -->
+            <p>code:<textarea name="code" rows="20" cols="50">
+                (begin
+                (define count 0)
+                (while (&lt; count 4)
+                    (boxbot_move 10)
+                    (boxbot_turn -90)
+                    (setq count (+ count 1))))
+            </textarea></p>
             <p><input type="submit" /></p>
         </form>
     </body>    

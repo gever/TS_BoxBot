@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<!-- MOTION PLAN GUI -->
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>boxbot</title>
+  <link href="style.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body style="width:100%;">
+  <div class="banner" style="width: 100%;">Tinkering School Boxbot
+    <span id='total_energy_cost' style="float:right; margin-right: 20px;">Energy Cost: 0</span>
+  </div>
+  <table>
+    <tr>
+      <td class="command_container">
+        <table width="100%;">
+          <!-- first row -->
+          <tr>
+            <td id="MOV_FWD_1" class="panel_button fwd_style" cost="1">
+              <div class="button_contents">Forward 1</div>
+            </td>
+            <td id="MOV_BWD_1" class="panel_button bwd_style">
+              <div class="button_contents">Backward 1</div>
+            </td>
+            <td id="TRN_LT_15" class="panel_button left_style">
+              <div class="button_contents">Left 15</div>
+              <div class="energy_cost">[1]</div>
+            </td>
+            <td id="TRN_RT_15" class="panel_button right_style">
+              <div class="button_contents">Right 15</div>
+              <div class="energy_cost">[1]</div>
+            </td>
+          </tr>
+
+          <!-- second row -->
+          <tr>
+            <td id="MOV_FWD_5" class="panel_button fwd_style">
+              <div class="button_contents">Forward 5</div>
+            </td>
+            <td id="MOV_BWD_5" class="panel_button bwd_style">
+              <div class="button_contents">Backward 5</div>
+            </td>
+            <td id="TRN_LT_30" class="panel_button left_style">
+              <div class="button_contents">Left 30</div>
+              <div class="energy_cost">[2]</div>
+            </td>
+            <td id="TRN_RT_30" class="panel_button right_style">
+              <div class="button_contents">Right 30</div>
+              <div class="energy_cost">[2]</div>
+            </td>
+          </tr>
+
+          <!-- third row -->
+          <tr>
+            <td id="MOV_FWD_10" class="panel_button fwd_style">
+              <div class="button_contents">Forward 10</div>
+            </td>
+            <td id="MOV_BWD_10" class="panel_button bwd_style">
+              <div class="button_contents">Backward 10</div>
+            </td>
+            <td id="TRN_LT_90" class="panel_button left_style">
+              <div class="button_contents">Left 90</div>
+              <div class="energy_cost">[6]</div>
+            </td>
+            <td id="TRN_RT_90" class="panel_button right_style">
+              <div class="button_contents">Right 90</div>
+              <div class="energy_cost">[6]</div>
+            </td>
+          </tr>
+
+          <!-- fourth row -->
+          <tr>
+            <td id="MOV_FWD_20" class="panel_button fwd_style">
+              <div class="button_contents">Forward 20</div>
+            </td>
+            <td id="MOV_BWD_20" class="panel_button bwd_style">
+              <div class="button_contents">Backward 20</div>
+            </td>
+            <td id="TRN_LT_180" class="panel_button left_style">
+              <div class="button_contents">Left 180</div>
+              <div class="energy_cost">[12]</div>
+            </td>
+            <td id="TRN_RT_180" class="panel_button right_style">
+              <div class="button_contents">Right 180</div>
+              <div class="energy_cost">[12]</div>
+            </td>
+          </tr>
+
+          <!-- fifth row (Sylvia's experimental servo section!)
+        <tr>
+          <td id="Servo_CW 90" class="panel_button servo_style">
+            <div class="button_contents">Servo CW 90</div>
+          </td>
+          <td id="Servo CW 180" class="panel_button servo_style">
+            <div class="button_contents">Servo CW 180</div>
+          </td>
+          <td id="Servo CCW 90" class="panel_button servo_style">
+            <div class="button_contents">Servo CCW 90</div>
+          </td>
+          <td id="Servo CCW 180" class="panel_button servo_style">
+            <div class="button_contents">Servo CCW 180</div>
+          </td>
+        </tr> 
+        -->
+
+
+        </table>
+      </td>
+
+      <td>
+        <div class="code_container">
+          <div class="main_pane">
+            <div class="panel_title"">Motion Plan</div>
+            <div id='code_area'></div>
+          </div>
+          <table width=" 100%" style="vertical-align:bottom;">
+    <tr>
+      <td>
+        <div id="button_undo" class="code_button undo_button" onclick="undoCode(event)">
+          <div class="code_button_contents">Undo</div>
+        </div>
+      </td>
+      <td>
+        <div id="button_clear" class="code_button clear_plan_button" onclick="clearCode(event)">
+          <div class="code_button_contents">Clear Plan</div>
+        </div>
+      </td>
+      <td>
+        <div id="button_send" class="code_button" onclick="sendCode(event)">
+          <div class="code_button_contents">Uplink</div>
+        </div>
+      </td>
+      <td>
+        <div id="button_abort" class="code_button abort_button" onclick="boxbot_stop(event)">
+          <div class="code_button_contents">ABORT</div>
+        </div>
+      </td>
+    </tr>
+  </table>
+  </div>
+  </td>
+  </tr>
+  </table>
+  <pre style="color:aliceblue" id="error_panel"></pre>
+  <script src="motion_script.js"></script>
+</body>
+
+</html>

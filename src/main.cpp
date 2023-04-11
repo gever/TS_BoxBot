@@ -19,7 +19,7 @@ typedef Lisp<8192,2048> MySmallLisp;
 #define ABS(x) ((x<0) ? (-x) : (x))
 
 // the gui is (currently) served as static "files" from memory
-#include "html_files.h"  // script-generated in the repl.it repo: https://replit.com/@gever/bbdebuggui
+// #include "html_files.h"  // script-generated in the repl.it repo: https://replit.com/@gever/bbdebuggui
 WebServer server(80);
 
 // things that can be set through settings UI
@@ -213,22 +213,6 @@ void setup_timer( ) {
   timerAlarmEnable(step_timer);
 }
 
-/*
-   Handle requests for static page content
-*/
-void handleLandingPage() {
-  server.send(200, "text/html", index_html);
-}
-void handleScriptJs() {
-  server.send(200, "text/javascript", script_js);
-}
-void handleStyleCss() {
-  server.send(200, "text/css", style_css);
-}
-void handleSetup() {
-  server.send(200, "text/html", settings_html);
-}
-
 void handleNotFound() {
   String message = "File Not Found\n\n";
   message += "URI: ";
@@ -292,7 +276,7 @@ void handleSave() {
       linear_turn_fudge = server.arg( label ).toFloat();
     }
   }
-  handleLandingPage();
+  // TODO: handleLandingPage();
 }
 
 // parse a string into a number
@@ -327,6 +311,30 @@ void handlePlan() {
   }
 }
 
+void serveGenericPage(String url) {
+  Serial.print("handlePageRequest: " + url + " ");
+  if( !SPIFFS.exists(url) ) {
+    Serial.println("file does not exist:" + url);
+    server.send(404, "text/plain", "file does not exist" + url);
+    return;
+  }
+  
+  File file = SPIFFS.open(url, "r");
+  if (!file) {
+    Serial.println("file open failed" + url);
+    server.send(404, "text/plain", "file open failed" + url);
+    return;
+  }
+  String contentType = "text/plain";
+  if (url.endsWith(".html")) contentType = "text/html";
+  else if (url.endsWith(".js")) contentType = "text/javascript";
+  else if (url.endsWith(".css")) contentType = "text/css";
+  else if (url.endsWith(".ico")) contentType = "image/x-icon";
+  Serial.println(contentType);
+  server.streamFile(file, contentType);
+  file.close();
+}
+
 typedef Lisp<8192,2048> MySmallLisp;
 MySmallLisp lisp;
 void lispSetup() {
@@ -341,7 +349,7 @@ void lispSetup() {
   lisp.input_from_buffer(buf);
 }
 
-void eval_code(const char *code) {
+void evalCode(const char *code) {
   lisp.unwind();
   lisp.input_from_buffer(code);
   lisp.eval(*lisp.push(lisp.read()), lisp.env);  
@@ -349,37 +357,19 @@ void eval_code(const char *code) {
 }
 
 void handleLisp() {
+  // TODO: do this more like handlePlan() above
   if (server.args()) {
     const String label = "code";
     if (server.hasArg( label )) {
       // TODO: configure the lisp input to come from the form field
       String script = server.arg( label );
-      eval_code(script.c_str());
+      evalCode(script.c_str());
     }
   }
-  handleLandingPage();
+  serveGenericPage("lisp_input.html");  // TODO: fill form with previous code
 }
 
-// handle request for static page content
-void handlePageRequest() {
-  char page_buffer[1024*2];
-  String url = server.uri();
-  Serial.println("handlePageRequest: " + url);
-  File file = SPIFFS.open(url, "r");
-  if (!file) {
-    Serial.println("file open failed");
-    server.send(404, "text/plain", "file not found");
-    return;
-  }
-  int bytes_read = file.readBytes(page_buffer, sizeof(page_buffer));
-  Serial.println("bytes_read: " + String(bytes_read));
-  file.close();
-  // server.streamFile(file, "text/html");
-  Serial.println(page_buffer);
-  server.send(200, "text/html", page_buffer);
-}
-
-void execute_plan() {
+void executePlan() {
   // only parse/setup next statement in the plan if we have finished the previous step
   if (plan_ready && (step_count == 0)) {
     int num = 0;
@@ -402,12 +392,20 @@ void execute_plan() {
   }
 }
 
-void list_files() {
+// handle request for static page content from the SPIFFS filesystem
+void handlePageRequest() {
+  String url = server.uri();
+  serveGenericPage(url);
+  // server.send(SPIFFS, url, contentType);
+}
+
+void addAllFiles() {
   File root = SPIFFS.open("/");
   File file = root.openNextFile();
   while(file){
     Serial.print("  FILE: ");
     Serial.println(file.name());
+    server.on("/" + String(file.name()), handlePageRequest);
     file = root.openNextFile();
   }
 }
@@ -435,18 +433,14 @@ void setup() {
   Serial.println(myIP);
 
   Serial.println("Configuring server...");
-  server.on("/", handleLandingPage);
+  // dynamic pages
+  // server.on("/", handleLandingPage);
   server.on("/move", handleMove);   // immediate move
   server.on("/turn", handleTurn);   // immediate turn
   server.on("/stop", handleStop);   // immediate stop (of everything)
   server.on("/plan", handlePlan);     // run multiple commands (BUCL script)
   server.on("/lisp_code", handleLisp);   // execute lisp fragment (for testing)
-  server.on("/lisp.html", handlePageRequest);
-  server.on("/index.html", handleLandingPage);
-  server.on("/style.css", handleStyleCss);
-  server.on("/script.js", handleScriptJs);
-  server.on("/settings.html", handleSetup);
-  server.on("/settings", handleSetup);
+  // server.on("/settings", handleSetup);
   server.on("/save", handleSave);
   server.onNotFound(handleNotFound);
 
@@ -461,12 +455,12 @@ void setup() {
   Serial.println("Starting motors...");
   setup_timer( );
 
-  // see what's on the filesystem
-  list_files();
+  // see what's on the filesystem (and add it to the server)
+  addAllFiles();
 }
 
 void loop() {
   server.handleClient();  // close out any open/pending web transactions
-  execute_plan();      // returns immediately if there's no plan, loops there if there is a plan
+  executePlan();      // returns immediately if there's no plan, loops there if there is a plan
   delay(2);            // allow the cpu to switch to other tasks
 }
