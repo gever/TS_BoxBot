@@ -460,7 +460,10 @@ void setup() {
 }
 
 void loop() {
+  // Put sensor test code here, change #if 1 to #if 0 to disable main loop
+#if 1
   server.handleClient();  // close out any open/pending web transactions
   executePlan();      // returns immediately if there's no plan, loops there if there is a plan
+#endif
   delay(2);            // allow the cpu to switch to other tasks
 }
