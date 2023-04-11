@@ -843,6 +843,7 @@ L f_quit(L t, L *_) {
 }
 
 /* ESP32 - BOXBOT */
+// lisp: (boxbot-move (* i 10))
 L f_boxbot_move(L t, L *_) {
   int dist;
   dist = car(t);
@@ -850,9 +851,10 @@ L f_boxbot_move(L t, L *_) {
   return nil;
 }
 
+// lisp: (boxbot-turn (* 45 3))
 L f_boxbot_turn(L t, L *_) {
   int angle;
-  angle = car(t);
+  angle = car(t); // angle in degrees (evaluate the lisp expression)
   setup_turn(angle > 0, angle < 0 ? -angle : angle);
   return nil;
 }
