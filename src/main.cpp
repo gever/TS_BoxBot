@@ -120,7 +120,12 @@ class MarsStepper {
 
 // create the motors
 MarsStepper m1(13, 14, 27, 26);
-MarsStepper m2(18, 19, 21, 22);
+MarsStepper m2(15, 2, 4, 19);
+
+// allocate the sensor pins 
+//const int pingPin = 5; // Trigger Pin of Ultrasonic Sensor
+//const int echoPin = 18; // Echo Pin of Ultrasonic Sensor
+//int servoPin = 32;
 
 const float rot_steps = 2038 * 2;   // one full rotation of the motor shaft
 const float boxbot_body_rad = 75;   // the distance from the pen to the wheel in mm
