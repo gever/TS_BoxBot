@@ -1,151 +1,106 @@
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
-<!-- MOTION PLAN GUI -->
 
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width">
-  <title>boxbot</title>
-  <link href="style.css" rel="stylesheet" type="text/css" />
+  <meta charset="UTF-8">
+  <title>blox</title>
+  <link rel="stylesheet" href="style.css">
+  </link>
+  <script src="blockly_compressed.js"></script>
+  <script src="blocks_compressed.js"></script>
+  <script src="en.js"></script>
 </head>
 
-<body style="width:100%;">
-  <div class="banner" style="width: 100%;">Tinkering School Boxbot
-    <span id='total_energy_cost' style="float:right; margin-right: 20px;">Energy Cost: 0</span>
-  </div>
-  <table>
-    <tr>
-      <td class="command_container">
-        <table width="100%;">
-          <!-- first row -->
-          <tr>
-            <td id="MOV_FWD_1" class="panel_button fwd_style" cost="1">
-              <div class="button_contents">Forward 1</div>
-            </td>
-            <td id="MOV_BWD_1" class="panel_button bwd_style">
-              <div class="button_contents">Backward 1</div>
-            </td>
-            <td id="TRN_LT_15" class="panel_button left_style">
-              <div class="button_contents">Left 15</div>
-              <div class="energy_cost">[1]</div>
-            </td>
-            <td id="TRN_RT_15" class="panel_button right_style">
-              <div class="button_contents">Right 15</div>
-              <div class="energy_cost">[1]</div>
-            </td>
-          </tr>
+<body>
+  <xml id="toolbox" style="display: none;">
+    <!-- turtle movement category -->
+    <category name="Movement" colour="#fb8500">
+      <block type="forward"></block>
+      <block type="backward"></block>
+      <block type="right"></block>
+      <block type="left"></block>
+      <!--
+      <block type="turtle_pen"></block>
+      -->
+    </category>
 
-          <!-- second row -->
-          <tr>
-            <td id="MOV_FWD_5" class="panel_button fwd_style">
-              <div class="button_contents">Forward 5</div>
-            </td>
-            <td id="MOV_BWD_5" class="panel_button bwd_style">
-              <div class="button_contents">Backward 5</div>
-            </td>
-            <td id="TRN_LT_30" class="panel_button left_style">
-              <div class="button_contents">Left 30</div>
-              <div class="energy_cost">[2]</div>
-            </td>
-            <td id="TRN_RT_30" class="panel_button right_style">
-              <div class="button_contents">Right 30</div>
-              <div class="energy_cost">[2]</div>
-            </td>
-          </tr>
+    <!-- Loops category -->
+    <category name="Loops" colour="green">
+      <block type="controls_repeat"></block>
+      <!--
+      <block type="controls_whileUntil"></block>
+      <block type="controls_forEach"></block>
+      <block type="controls_flow_statements"></block>
+      <block type="controls_for"></block>
+      -->
+    </category>
 
-          <!-- third row -->
-          <tr>
-            <td id="MOV_FWD_10" class="panel_button fwd_style">
-              <div class="button_contents">Forward 10</div>
-            </td>
-            <td id="MOV_BWD_10" class="panel_button bwd_style">
-              <div class="button_contents">Backward 10</div>
-            </td>
-            <td id="TRN_LT_90" class="panel_button left_style">
-              <div class="button_contents">Left 90</div>
-              <div class="energy_cost">[6]</div>
-            </td>
-            <td id="TRN_RT_90" class="panel_button right_style">
-              <div class="button_contents">Right 90</div>
-              <div class="energy_cost">[6]</div>
-            </td>
-          </tr>
+    <!-- Logic category -->
+    <!--
+    <category name="Logic" colour="#AAF">
+      <block type="controls_if"></block>
+      <block type="logic_compare"></block>
+      <block type="logic_operation"></block>
+      <block type="logic_negate"></block>
+      <block type="logic_boolean"></block>
+    </category>
+    -->
 
-          <!-- fourth row -->
-          <tr>
-            <td id="MOV_FWD_20" class="panel_button fwd_style">
-              <div class="button_contents">Forward 20</div>
-            </td>
-            <td id="MOV_BWD_20" class="panel_button bwd_style">
-              <div class="button_contents">Backward 20</div>
-            </td>
-            <td id="TRN_LT_180" class="panel_button left_style">
-              <div class="button_contents">Left 180</div>
-              <div class="energy_cost">[12]</div>
-            </td>
-            <td id="TRN_RT_180" class="panel_button right_style">
-              <div class="button_contents">Right 180</div>
-              <div class="energy_cost">[12]</div>
-            </td>
-          </tr>
+    <!-- Math category -->
+    <category name="Math" colour="230">
+      <block type="math_number"></block>
+      <block type="math_arithmetic"></block>
+      <!--
+      <block type="math_single"></block>
+      <block type="math_trig"></block>
+      <block type="math_constant"></block>
+      <block type="math_change"></block>
+      <block type="math_round"></block>
+      <block type="math_on_list"></block>
+      <block type="math_modulo"></block>
+      <block type="math_constrain"></block>
+      <block type="math_random_int"></block>
+      -->
+    </category>
 
-          <!-- fifth row (Sylvia's experimental servo section!)
-        <tr>
-          <td id="Servo_CW 90" class="panel_button servo_style">
-            <div class="button_contents">Servo CW 90</div>
-          </td>
-          <td id="Servo CW 180" class="panel_button servo_style">
-            <div class="button_contents">Servo CW 180</div>
-          </td>
-          <td id="Servo CCW 90" class="panel_button servo_style">
-            <div class="button_contents">Servo CCW 90</div>
-          </td>
-          <td id="Servo CCW 180" class="panel_button servo_style">
-            <div class="button_contents">Servo CCW 180</div>
-          </td>
-        </tr> 
-        -->
+    <!-- Text category -->
+    <!--
+    <category name="Text" colour="160">
+      <block type="text"></block>
+      <block type="text_join"></block>
+      <block type="text_length"></block>
+      <block type="text_print"></block>
+    </category>
+    -->
 
+    <!-- Lists category -->
+    <!--
+    <category name="Lists" colour="260">
+      <block type="lists_create_empty"></block>
+      <block type="lists_create_with"></block>
+      <block type="lists_repeat"></block>
+      <block type="lists_length"></block>
+      <block type="lists_isEmpty"></block>
+      <block type="lists_indexOf"></block>
+      <block type="lists_getIndex"></block>
+      <block type="lists_setIndex"></block>
+      <block type="lists_getSublist"></block>
+      <block type="lists_split"></block>
+      <block type="lists_sort"></block>
+    </category>
+    -->
 
-        </table>
-      </td>
+    <!-- Variables category -->
+    <category name="Variables" colour="330" custom="VARIABLE"></category>
 
-      <td>
-        <div class="code_container">
-          <div class="main_pane">
-            <div class="panel_title"">Motion Plan</div>
-            <div id='code_area'></div>
-          </div>
-          <table width=" 100%" style="vertical-align:bottom;">
-    <tr>
-      <td>
-        <div id="button_undo" class="code_button undo_button" onclick="undoCode(event)">
-          <div class="code_button_contents">Undo</div>
-        </div>
-      </td>
-      <td>
-        <div id="button_clear" class="code_button clear_plan_button" onclick="clearCode(event)">
-          <div class="code_button_contents">Clear Plan</div>
-        </div>
-      </td>
-      <td>
-        <div id="button_send" class="code_button" onclick="sendCode(event)">
-          <div class="code_button_contents">Uplink</div>
-        </div>
-      </td>
-      <td>
-        <div id="button_abort" class="code_button abort_button" onclick="boxbot_stop(event)">
-          <div class="code_button_contents">ABORT</div>
-        </div>
-      </td>
-    </tr>
-  </table>
-  </div>
-  </td>
-  </tr>
-  </table>
-  <pre style="color:aliceblue" id="error_panel"></pre>
-  <script src="motion_script.js"></script>
+    <!-- Functions category -->
+    <!--
+    <category name="Functions" colour="290" custom="PROCEDURE"></category>
+    -->
+  </xml>
+  <h2><img src="boxbot_icon.png" height="20px" />&nbsp;Boxbot</h2>
+  <div id="blocklyDiv" style="height: 600px; width: 800px;"></div>
+  <script src="boxbot.js"></script>
 </body>
 
 </html>
