@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"path": "../../../../dev/boxbot"
+		},
+		{
+			"name": "test",
+			"path": "../../test"
+		},
+		{
+			"path": "../../../../boxbot2"
+		},
+		{
+			"name": "test01",
+			"path": "../../test01"
+		},
+		{
+			"name": "TS_BoxBot",
+			"path": ".."
+		}
+	],
+	"settings": {}
+}
