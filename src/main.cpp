@@ -316,6 +316,26 @@ void handleStop()
   server.send(200, "application/json", "{status:'ACK'}");
 }
 
+void handleBusy() {
+  if (step_count > 0)
+    server.send(200, "application/json", "{busy:true}");
+  else
+    server.send(200, "application/json", "{busy:false}");
+}
+
+/*
+ * Sensors
+ */
+#define JSON_BUFFER_SIZE 128
+
+void handleLuminosity()
+{
+  char jsonBuffer[JSON_BUFFER_SIZE];
+  int v = getLuminosity();
+  snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{luminosity:%d}", v);
+  server.send(200, "application/json", jsonBuffer);
+}
+
 void handleSave()
 {
   // TODO: save current settings to SPIFFS/flash memory
@@ -407,6 +427,8 @@ void serveGenericPage(String url)
     contentType = "text/css";
   else if (url.endsWith(".ico"))
     contentType = "image/x-icon";
+  else if (url.endsWith(".zip"))
+    contentType = "application/javascript";
   Serial.println(contentType);
   server.streamFile(file, contentType);
   file.close();
@@ -543,7 +565,9 @@ void setup()
   server.on("/turn", handleTurn);      // immediate turn
   server.on("/stop", handleStop);      // immediate stop (of everything)
   server.on("/plan", handlePlan);      // run multiple commands (BUCL script)
+  server.on("/busy", handleBusy);      // run multiple commands (BUCL script)
   server.on("/lisp_code", handleLisp); // execute lisp fragment (for testing)
+  server.on("/luminosity", handleLuminosity); // get luminosity
   // server.on("/settings", handleSetup);
   server.on("/save", handleSave);
   server.onNotFound(handleNotFound);
@@ -566,13 +590,6 @@ void setup()
 
 void loop()
 {
-  // Put sensor test code here, change #if 1 to #if 0 to disable main loop
-#if 0
   server.handleClient(); // close out any open/pending web transactions
   executePlan();         // returns immediately if there's no plan, loops there if there is a plan
-#endif
-  getLuminosity();
-  servoSetup(33); 
-  servoMove(90);
-  delay(500); // allow the cpu to switch to other tasks
 }

@@ -1,5 +1,6 @@
 // libraries 
 #include <Adafruit_MPU6050.h>
+#include "sensors.h"
 
 Adafruit_MPU6050 mpu;
 Adafruit_Sensor *mpu_temp, *mpu_accel, *mpu_gyro;
@@ -21,9 +22,7 @@ const int luminosityPin = 34; // io pin for the luminosity sensor
 bool accelerometer = true; 
 bool gyroscope = true; 
 bool temperature = false; 
-bool x = true; 
-bool y = true; 
-bool z = true; 
+
 
 /*
 // some setup for the MPU6050 
@@ -52,7 +51,7 @@ void setupMPU6050(){
 
 // get luminosity 
 // 10 millisecond averaging loop 
-int getLuminosity(){
+int getLuminosity(void) {
     int values[5];\
     for (int i=0; i < 5; i++){
         int newValue = analogRead(luminosityPin);
@@ -63,9 +62,11 @@ int getLuminosity(){
     for (int i = 0; i < 5; i++){
         lumValue = lumValue + values[i]; 
     }
+    // TODO: normalize the value to a range of 0-100
     float lumAvg = (lumValue/5); // dividing by 5*10. 5 comes from 5 items averaging, 10 is to round the value 
+    Serial.print("sensor reading: "); 
     Serial.println(lumAvg); 
-    Serial.println("sensor reading:"); 
+    
     return (lumAvg);
 }
 
@@ -105,45 +106,70 @@ void getTemperature(){
 
 // get accelerometer 
 // outputs meters/second^2
-void getAccelerometer(){
-    sensors_event_t accel;
-    mpu_accel->getEvent(&accel);
+Accelerometer getAccelerometer(bool x = true, bool y = true, bool z = true) {
+  Accelerometer accel;
+  sensors_event_t s_event;
+
+  mpu_accel->getEvent(&s_event);
+  accel.x = s_event.acceleration.x;
+  accel.y = s_event.acceleration.y;
+  accel.z = s_event.acceleration.z;
+
+  // TODO: use the global debug variable
+#ifdef DEBUG
+  {
     Serial.print("\t\tAccel: ");
-    if (x){
+    if (x) {
       Serial.print(" X : ");
-      Serial.print(accel.acceleration.x);
+      Serial.print(s_event.acceleration.x);
     }
     if (y){
       Serial.print(" \tY: ");
-      Serial.print(accel.acceleration.y);
+      Serial.print(s_event.acceleration.y);
     }
     if (z){
       Serial.print(" \tZ: ");
-      Serial.print(accel.acceleration.z);
+      Serial.print(s_event.acceleration.z);
     }
     Serial.println(" m/s^2 ");
+  }
+#endif
+  return accel;
 }
 
 
 // get gyroscope
 // outputs radians/second
-void getGyroscope(){
-    sensors_event_t gyro;
-    mpu_gyro->getEvent(&gyro);
-    Serial.print("\t\tGyro: ");
-    if (x){
-      Serial.print(" X : ");
-      Serial.print(gyro.gyro.x);
+Gyroscope getGyroscope(){
+    sensors_event_t s_event;
+    Gyroscope gyro;
+
+    mpu_gyro->getEvent(&s_event);
+    gyro.x = s_event.gyro.x;
+    gyro.y = s_event.gyro.y;
+    gyro.z = s_event.gyro.z;
+
+    // TODO: use the global debug variable
+#ifdef DEBUG
+    {
+      Serial.print("\t\tGyro: ");
+      if (x){
+        Serial.print(" X : ");
+        Serial.print(s_event.gyro.x);
+      }
+      if (y){
+        Serial.print(" \tY: ");
+        Serial.print(s_event.gyro.y);
+      }
+      if (z){
+        Serial.print(" \tZ: ");
+        Serial.print(s_event.gyro.z);
+      }
+      Serial.println(" radians/s ");
     }
-    if (y){
-      Serial.print(" \tY: ");
-      Serial.print(gyro.gyro.y);
-    }
-    if (z){
-      Serial.print(" \tZ: ");
-      Serial.print(gyro.gyro.z);
-    }
-    Serial.println(" radians/s ");
+#endif
+
+    return gyro;
 }
 
 

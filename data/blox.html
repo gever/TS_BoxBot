@@ -1,15 +1,24 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
+
 <head>
   <meta charset="UTF-8">
   <title>blox</title>
-  <script src="blockly_compressed.js"></script>
+  <link rel="stylesheet" href="style.css">
+  </link>
+  <script src="blockly_compressed.js.gz" type="application/javascript"></script>
   <script src="blocks_compressed.js"></script>
+  <script src="js_gen.js"></script>
+  <script src="toolbox.js"></script>
   <script src="en.js"></script>
 </head>
+
 <body>
-    <h2>Boxbot (beta)</h2>
-    <div id="blocklyDiv" style="height: 600px; width: 800px;"></div>
-    <script src="boxbot.js"></script>
+  <h2><img src="boxbot_icon.png" height="20px" />&nbsp;Boxbot</h2>
+  <div id="blocklyDiv" style="height: 600px; width: 800px;"></div>
+  <div id="codePanel" style="height: 100px; width: 800px;"></div>
+  <div id="controlPanel"><button onclick="runCode()">Run</button></div>
+  <script src="boxbot.js"></script>
 </body>
+
 </html>
