@@ -427,7 +427,7 @@ void serveGenericPage(String url)
     contentType = "text/css";
   else if (url.endsWith(".ico"))
     contentType = "image/x-icon";
-  else if (url.endsWith(".zip"))
+  else if (url.endsWith(".js.gz"))
     contentType = "application/javascript";
   Serial.println(contentType);
   server.streamFile(file, contentType);
