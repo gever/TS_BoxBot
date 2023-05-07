@@ -293,6 +293,8 @@ void handleMove()
   {
     int v = server.arg(0).toInt(); // negative for backwards movement
     setup_move(v < 0 ? BWD : FWD, ABS(v));
+    Serial.print("move:");
+    Serial.println(v);
   }
   server.send(200, "application/json", "{status:'ACK'}");
 }
@@ -303,6 +305,8 @@ void handleTurn()
   {
     int v = server.arg(0).toInt();
     setup_turn(v < 0 ? 0 : 1, ABS(v)); // negative for left turns
+    Serial.print("turn:");
+    Serial.println(v);
   }
   server.send(200, "application/json", "{status:'ACK'}");
 }
@@ -317,10 +321,14 @@ void handleStop()
 }
 
 void handleBusy() {
-  if (step_count > 0)
+  if (step_count > 0) {
+    Serial.println("BUSY: true");
+    delay(1000/20); // rate limiter
     server.send(200, "application/json", "{busy:true}");
-  else
+  } else {
+    Serial.println("BUSY: false");
     server.send(200, "application/json", "{busy:false}");
+  }
 }
 
 /*
