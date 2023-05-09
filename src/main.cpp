@@ -293,8 +293,6 @@ void handleMove()
   {
     int v = server.arg(0).toInt(); // negative for backwards movement
     setup_move(v < 0 ? BWD : FWD, ABS(v));
-    Serial.println("handleMove: " + String(v));
-    delay(500);
   }
   server.send(200, "application/json", "{\"status\":\"ACK\"}");
 }
