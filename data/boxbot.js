@@ -3,8 +3,8 @@
 //  - the code generator for the Blockly editor
 //  - the initialization of the Blockly editor
 
-// Add the behaviors for the custom movement commands (see toolbox XML in index.html)
-// using this palette: https://coolors.co/palette/8ecae6-219ebc-023047-ffb703-fb8500
+// TODO: Scott - luminosity block
+
 Blockly.Blocks['boxbot_forward'] = {
   init: function() {
     // this.appendDummyInput().appendField("Forward");
@@ -62,13 +62,14 @@ Blockly.Blocks['boxbot_left'] = {
 }
 
 async function fetchWait(url) {
-  console.log("fetching...");
+  console.log("fetching: " + url);
   await fetch(url);
   var busy = true;
   while (busy) {
-    console.log("busy is " + busy);
+    console.log("busy is " + busy + " " + url);
     var response = await fetch('/busy');
     if (!response.ok) {
+      console.log("error: " + response.status);
       busy = false;
     }
     var status = await response.json();
@@ -79,14 +80,11 @@ async function fetchWait(url) {
 }
 
 function asyncWrap(url) {
-  return "fetchWait(" + url + ");\n";
+  return "await fetchWait(" + url + ");\n";
 }
 
 Blockly.JavaScript['boxbot_forward'] = function(block) {
   var distance = Blockly.JavaScript.valueToCode(block, 'DISTANCE', Blockly.JavaScript.ORDER_ATOMIC);
-  // distance = eval(distance);
-  // console.log("DISTANCE expression: " + distance);
-  // var code = 'await fetch("/move?dist=" + Math.round(' + distance + ') );\n';
   var code = asyncWrap('"/move?dist=" + Math.round(' + distance + ')');
   return code;
 };
@@ -119,5 +117,7 @@ function runCode() {
   var code = '(async () => {' + generateCode() + '})()';
   console.log("----------");
   console.log(code);
+  // TODO: Scott - how do we prevent double-clicking the run button?
+  // TODO: Scott - how do abort a running program?
   eval(code);
 }
