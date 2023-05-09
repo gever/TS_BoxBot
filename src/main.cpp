@@ -9,6 +9,7 @@
 #include <WebServer.h>
 #include <FS.h>
 #include <SPIFFS.h>
+// #include <mdns.h>
 #include "util.h"
 #include "sensors.h"
 #include "servo.h"
@@ -24,8 +25,6 @@ typedef Lisp<8192, 2048> MySmallLisp;
   }
 #define ABS(x) ((x < 0) ? (-x) : (x))
 
-// the gui is (currently) served as static "files" from memory
-// #include "html_files.h"  // script-generated in the repl.it repo: https://replit.com/@gever/bbdebuggui
 WebServer server(80);
 
 // things that can be set through settings UI
@@ -36,6 +35,7 @@ float linear_motion_fudge = 1.0;
 bool wheels_forward = true;
 
 // Set these to your desired credentials.
+bool use_wifi = false;
 const char *ssid = "silly-bobcat";
 const char *password = (char *)NULL;
 
@@ -293,8 +293,10 @@ void handleMove()
   {
     int v = server.arg(0).toInt(); // negative for backwards movement
     setup_move(v < 0 ? BWD : FWD, ABS(v));
+    Serial.println("handleMove: " + String(v));
+    delay(500);
   }
-  server.send(200, "application/json", "{status:'ACK'}");
+  server.send(200, "application/json", "{\"status\":\"ACK\"}");
 }
 
 void handleTurn()
@@ -303,8 +305,9 @@ void handleTurn()
   {
     int v = server.arg(0).toInt();
     setup_turn(v < 0 ? 0 : 1, ABS(v)); // negative for left turns
+    Serial.println("handleTurn: " + String(v));
   }
-  server.send(200, "application/json", "{status:'ACK'}");
+  server.send(200, "application/json", "{\"status\":\"ACK\"}");
 }
 
 void handleStop()
@@ -313,14 +316,18 @@ void handleStop()
   m2.disable();
   step_count = 0;
   plan_ready = false;
-  server.send(200, "application/json", "{status:'ACK'}");
+  server.send(200, "application/json", "{\"status\":\"ACK\"}");
 }
 
 void handleBusy() {
-  if (step_count > 0)
-    server.send(200, "application/json", "{busy:true}");
-  else
-    server.send(200, "application/json", "{busy:false}");
+  if (step_count > 0) {
+    Serial.println("handleBusy: busy");
+    delay(1000/20);
+    server.send(200, "application/json", "{\"busy\":true}");
+  } else {
+    Serial.println("handleBusy: not busy");
+    server.send(200, "application/json", "{\"busy\":false}");
+  }
 }
 
 /*
@@ -332,7 +339,7 @@ void handleLuminosity()
 {
   char jsonBuffer[JSON_BUFFER_SIZE];
   int v = getLuminosity();
-  snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{luminosity:%d}", v);
+  snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"luminosity\":%d}", v);
   server.send(200, "application/json", jsonBuffer);
 }
 
@@ -388,11 +395,11 @@ void handlePlan()
     if (server.arg(0).length() > MAX_PLAN_LEN - 1)
     {
       Serial.println("ERR: Motion plan length exceeds buffer size - ignoring plan.");
-      server.send(200, "application/json", "{status:'ACK'}"); // TODO: send better return statuses
+      server.send(200, "application/json", "{\"status\":\"ACK\"}"); // TODO: send better return statuses
       return;
     }
 
-    server.send(200, "application/json", "{status:'ACK'}"); // TODO: send better return statuses
+    server.send(200, "application/json", "{\"status\":\"ACK\"}"); // TODO: send better return statuses
 
     strcpy(plan_buffer, server.arg(0).c_str());
     plan = plan_buffer;               // point it back at the front of the buffer
@@ -427,7 +434,7 @@ void serveGenericPage(String url)
     contentType = "text/css";
   else if (url.endsWith(".ico"))
     contentType = "image/x-icon";
-  else if (url.endsWith(".zip"))
+  else if (url.endsWith(".zip") || url.endsWith(".gz"))
     contentType = "application/javascript";
   Serial.println(contentType);
   server.streamFile(file, contentType);
@@ -509,8 +516,9 @@ void executePlan()
 void handlePageRequest()
 {
   String url = server.uri();
+  if (url == "/")
+    url = "/index.html";
   serveGenericPage(url);
-  // server.send(SPIFFS, url, contentType);
 }
 
 void addAllFiles()
@@ -526,6 +534,11 @@ void addAllFiles()
   }
 }
 
+// Replace with your network credentials
+#include "network_credentials.h"
+// const char* network_ssid = "YOUR SSID";
+// const char* network_password = "YOUR PASSWORD";
+
 void setup()
 {
   bool spiffs_ok = false;
@@ -539,7 +552,7 @@ void setup()
 
   // rtc.setTime(30,15,23,2,3,2023); // setup the time (this is for the sensors)
 
-  Serial.println("\n\nBoxbot v0.1 --------");
+  Serial.println("\n\nBoxbot v0.2 --------");
   if (!SPIFFS.begin(true))
   {
     Serial.println("ERR: SPIFFS Mount Failed");
@@ -551,15 +564,43 @@ void setup()
     spiffs_ok = true;
   }
 
-  Serial.println("Configuring access point...");
-  WiFi.softAP(ssid);
-  IPAddress myIP = WiFi.softAPIP();
-  // WiFi.softAPsetHostname(hostname);
-  Serial.print("AP IP address: ");
-  Serial.println(myIP);
+  // try connecting to the wifi network
+  if (use_wifi) {
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(network_ssid, network_password);
+    Serial.print("Connecting to ");
+    Serial.print(network_ssid);
+    Serial.print(" ");
+    for(int i=0; i<20; i++)
+    {
+      if (WiFi.status() == WL_CONNECTED) {
+        break;
+      }
+      delay(500);
+      Serial.print(".");
+    }
+    if (WiFi.status() != WL_CONNECTED)
+      Serial.println(" --> failed.");
+    else
+      Serial.println(" --> connected.");
+  }
+  if (!use_wifi || (WiFi.status() != WL_CONNECTED)){
+    Serial.println("Configuring access point...");
+    WiFi.softAP(ssid);
+    IPAddress myIP = WiFi.softAPIP();
+    // WiFi.softAPsetHostname(hostname);
+    Serial.print("AP IP address: ");
+    Serial.println(myIP);
+  } else {
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+  }
+  // mdns_init();
+  // mdns_hostname_set(ssid);
 
   Serial.println("Configuring server...");
   // dynamic pages
+  Serial.println("Starting server...");
   // server.on("/", handleLandingPage);
   server.on("/move", handleMove);      // immediate move
   server.on("/turn", handleTurn);      // immediate turn
@@ -571,13 +612,11 @@ void setup()
   // server.on("/settings", handleSetup);
   server.on("/save", handleSave);
   server.onNotFound(handleNotFound);
+  server.begin();
 
   // initialize lisp
   Serial.println("Configuring lisp...");
   lispSetup();
-
-  Serial.println("Starting server...");
-  server.begin();
 
   // set up the motor step timer
   Serial.println("Starting motors...");
