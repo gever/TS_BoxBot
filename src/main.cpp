@@ -341,6 +341,22 @@ void handleLuminosity()
   server.send(200, "application/json", jsonBuffer);
 }
 
+void handleDistance()
+{
+  char jsonBuffer[JSON_BUFFER_SIZE];
+  int v = getDistance(); 
+  snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"distance\":%d}", v);
+  server.send(200, "application/json", jsonBuffer);
+}
+
+void handleTemperature()
+{
+  char jsonBuffer[JSON_BUFFER_SIZE];
+  int v = getTemperature(); 
+  snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"temperature\":%d}", v);
+  server.send(200, "application/json", jsonBuffer);
+}
+
 void handleSave()
 {
   // TODO: save current settings to SPIFFS/flash memory
@@ -607,6 +623,7 @@ void setup()
   server.on("/busy", handleBusy);      // run multiple commands (BUCL script)
   server.on("/lisp_code", handleLisp); // execute lisp fragment (for testing)
   server.on("/luminosity", handleLuminosity); // get luminosity
+  server.on("/distance", handleDistance); // get distance 
   // server.on("/settings", handleSetup);
   server.on("/save", handleSave);
   server.onNotFound(handleNotFound);

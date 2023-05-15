@@ -71,7 +71,7 @@ int getLuminosity(void) {
 }
 
 // get distance 
-void getDistance(){
+int getDistance(void){
     //  send pulse
     long duration, inches, cm;
     pinMode(pingPin, OUTPUT);
@@ -91,12 +91,14 @@ void getDistance(){
     Serial.print(cm);
     Serial.print("cm");
     Serial.println();
+
+    return(cm);
 }
 
 
 // get temperature 
 // outputs degrees C (not sure why this would be useful but it's functionality we have access to)
-void getTemperature(){
+int getTemperature(void){
     sensors_event_t temp;
     mpu_temp->getEvent(&temp);
     Serial.print("\t\tTemperature ");

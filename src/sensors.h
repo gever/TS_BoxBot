@@ -11,7 +11,7 @@ typedef struct {
 } Gyroscope;
 
 int getLuminosity();
-void getDistance(); 
-void getTemperature(); 
+int getDistance(); 
+int getTemperature(); 
 Accelerometer getAccelerometer(); 
 Gyroscope getGyroscope();
