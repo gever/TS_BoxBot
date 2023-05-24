@@ -34,8 +34,11 @@ RIGHT motor:
 * in3 --> 2
 * in4 --> 15
 
-Luminosity Sensor: 
+Luminosity Sensor 1: 
 * OUT --> 34
+
+Luminosity Sensor 2: 
+* OUT --> 39 
 
 Distance Sensor: 
 * Trigger -->  5
