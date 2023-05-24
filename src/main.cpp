@@ -162,9 +162,9 @@ MarsStepper m2(15, 2, 4, 19); // this is changed!
 
 
 const float rot_steps = 2038 * 2;                                                   // one full rotation of the motor shaft
-const float boxbot_body_rad = 75;                                                   // the distance from the pen to the wheel in mm
+const float boxbot_body_rad = 55;                                                   // the distance from the pen to the wheel in mm
 const float boxbot_turn_circ = PI * 2.0 * boxbot_body_rad;                          // circumference of circle described by the wheels
-const float boxbot_wheel_rad = 40;                                                  // in mm
+const float boxbot_wheel_rad = 25;                                                  // in mm
 const float boxbot_wheel_circ = PI * 2.0 * boxbot_wheel_rad;                        // circumference of the wheel in mm
 const float boxbot_turn_steps = (boxbot_turn_circ / boxbot_wheel_circ) * rot_steps; // number of steps to turn 360 deg
 const float boxbot_steps_mm = rot_steps / boxbot_wheel_circ;                        // steps per mm
@@ -181,11 +181,22 @@ void IRAM_ATTR onTimer()
 
 int step_count = 0; // for the current motion, for all active motors
 
+/* 
+    setup a stop! 
+*/
+
+void setup_stop(){
+  m2.disable(); 
+  m1.disable();
+}
+
+
 /*
    set up a move command
    dir  - fwd=1, bwd=0
    dist - in centimeters
 */
+
 void setup_move(bool dir, int dist)
 {
   // SDEBUG("setup_move\ndir = ", dir);
@@ -333,22 +344,84 @@ void handleBusy() {
  */
 #define JSON_BUFFER_SIZE 128
 
-void handleLuminosity()
+void handleLuminosity1()
 {
   char jsonBuffer[JSON_BUFFER_SIZE];
-  int v = getLuminosity();
-  snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"luminosity\":%d}", v);
+  int v = getLuminosity1();
+  snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"luminosity1\":%d}", v);
   server.send(200, "application/json", jsonBuffer);
 }
+
+void handleLuminosity2()
+{
+  char jsonBuffer[JSON_BUFFER_SIZE];
+  int v = getLuminosity2();
+  snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"luminosity2\":%d}", v);
+  server.send(200, "application/json", jsonBuffer);
+}
+
 
 void handleDistance()
 {
   char jsonBuffer[JSON_BUFFER_SIZE];
   int v = getDistance(); 
+  Serial.print(v); 
   snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"distance\":%d}", v);
   server.send(200, "application/json", jsonBuffer);
 }
 
+void handleAccel_x()
+{
+  char jsonBuffer[JSON_BUFFER_SIZE];
+  float v = getAccel_x();
+  snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"accel x\":%f}", v);
+  server.send(200, "application/json", jsonBuffer);
+}
+
+void handleAccel_y()
+{
+  char jsonBuffer[JSON_BUFFER_SIZE];
+  float v = getAccel_y();
+  snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"accel y\":%d}", v);
+  server.send(200, "application/json", jsonBuffer);
+}
+
+void handleAccel_z()
+{
+  char jsonBuffer[JSON_BUFFER_SIZE];
+  float v = getAccel_z();
+  snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"accel z\":%d}", v);
+  server.send(200, "application/json", jsonBuffer);
+}
+
+
+void handleServoMove()
+{
+  char jsonBuffer[JSON_BUFFER_SIZE];
+  servoMove(90); 
+  snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"servo moved 90\":%d}");
+  server.send(200, "application/json", jsonBuffer);
+}
+
+/*
+void handleFindLine()
+{
+  char jsonBuffer[JSON_BUFFER_SIZE];
+  findLine(); 
+  snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"findline\":%d}");
+  server.send(200, "application/json", jsonBuffer);
+}
+*/
+
+
+
+void handleDetectLine()
+{
+  char jsonBuffer[JSON_BUFFER_SIZE];
+  bool v = detectLine(4095);  // 4095 is for a dark black line on white background
+  snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"line?\":%s}", v);
+  server.send(200, "application/json", jsonBuffer);
+}
 void handleTemperature()
 {
   char jsonBuffer[JSON_BUFFER_SIZE];
@@ -559,6 +632,9 @@ void setup()
 
   Serial.begin(115200);
   Serial.println("starting boxbot!!"); 
+
+  setupAccel(); 
+
   while (!Serial)
   {
     delay(10);
@@ -622,8 +698,15 @@ void setup()
   server.on("/plan", handlePlan);      // run multiple commands (BUCL script)
   server.on("/busy", handleBusy);      // run multiple commands (BUCL script)
   server.on("/lisp_code", handleLisp); // execute lisp fragment (for testing)
-  server.on("/luminosity", handleLuminosity); // get luminosity
+  server.on("/luminosity1", handleLuminosity1); // get luminosity
+   server.on("/luminosity2", handleLuminosity2); // get luminosity
   server.on("/distance", handleDistance); // get distance 
+  server.on("/accel-x", handleAccel_x); // accelerometer x axis 
+  server.on("/accel-y", handleAccel_y); // accelerometer y axis
+  server.on("/accel-z", handleAccel_z); // accelerometer z axis 
+  server.on("/moveServo", handleServoMove); // accelerometer z axis 
+  //server.on("/line", handleDetectLine); // boolean line or not
+  //server.on("findline", findLine); // find the line 
   // server.on("/settings", handleSetup);
   server.on("/save", handleSave);
   server.onNotFound(handleNotFound);
@@ -636,6 +719,9 @@ void setup()
   // set up the motor step timer
   Serial.println("Starting motors...");
   setup_timer();
+
+  // setup the servo 
+  servoSetup(25); 
 
   // see what's on the filesystem (and add it to the server)
   addAllFiles();
