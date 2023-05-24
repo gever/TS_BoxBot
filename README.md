@@ -23,13 +23,16 @@ ESP32 pinout: https://randomnerdtutorials.com/esp32-pinout-reference-gpios/
 **Wiring**: 
 
 LEFT motor: 
-in1 --> 26
-in2 --> 27
-in3 --> 14
-in4 --> 13
+* in1 --> 26
+* in2 --> 27
+* in3 --> 14
+* in4 --> 13
 
 RIGHT motor: 
-in1 --> 19
-in2 --> 4
-in3 --> 2
-in4 --> 15
+* in1 --> 19
+* in2 --> 4
+* in3 --> 2
+* in4 --> 15
+
+Luminosity Sensor: GPIO 34
+Distance Sensor: Trigger - 5; Echo - 18 
