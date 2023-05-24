@@ -34,5 +34,9 @@ RIGHT motor:
 * in3 --> 2
 * in4 --> 15
 
-Luminosity Sensor: GPIO 34
-Distance Sensor: Trigger - 5; Echo - 18 
+Luminosity Sensor: 
+* OUT --> 34
+
+Distance Sensor: 
+* Trigger -->  5
+* Echo --> 18 
