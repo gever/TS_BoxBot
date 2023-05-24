@@ -43,3 +43,12 @@ Luminosity Sensor 2:
 Distance Sensor: 
 * Trigger -->  5
 * Echo --> 18 
+
+Servo Pins: 
+* IN --> 32 
+* IN --> 33
+* IN --> 25 
+
+Servo Use Notes: 
+* Currently have to clarify which pin the servo is attached to in main under setup(). The io pins specified under Servo Pins are allotted to the servos. I don't know how it would work to have mulitple servos, that might require triplicates, one servoSetup and one servoMove for each pin. 
+* the 90 degree servos are good at going 90 degress. **this does not work with continuos rotation servos** 
