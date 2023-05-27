@@ -158,7 +158,7 @@ public:
 
 // create the motors
 MarsStepper m1(13, 14, 27, 26);
-MarsStepper m2(15, 2, 4, 19); // this is changed! 
+MarsStepper m2(15, 2, 4, 19); // this is changed!
 
 
 const float rot_steps = 2038 * 2;                                                   // one full rotation of the motor shaft
@@ -181,12 +181,12 @@ void IRAM_ATTR onTimer()
 
 int step_count = 0; // for the current motion, for all active motors
 
-/* 
-    setup a stop! 
+/*
+    setup a stop!
 */
 
 void setup_stop(){
-  m2.disable(); 
+  m2.disable();
   m1.disable();
 }
 
@@ -331,7 +331,6 @@ void handleStop()
 void handleBusy() {
   if (step_count > 0) {
     Serial.println("handleBusy: busy");
-    delay(1000/20);
     server.send(200, "application/json", "{\"busy\":true}");
   } else {
     Serial.println("handleBusy: not busy");
@@ -364,8 +363,8 @@ void handleLuminosity2()
 void handleDistance()
 {
   char jsonBuffer[JSON_BUFFER_SIZE];
-  int v = getDistance(); 
-  Serial.print(v); 
+  int v = getDistance();
+  Serial.print(v);
   snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"distance\":%d}", v);
   server.send(200, "application/json", jsonBuffer);
 }
@@ -398,7 +397,7 @@ void handleAccel_z()
 void handleServoMove()
 {
   char jsonBuffer[JSON_BUFFER_SIZE];
-  servoMove(90); 
+  servoMove(90);
   snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"servo moved 90\":%d}");
   server.send(200, "application/json", jsonBuffer);
 }
@@ -407,7 +406,7 @@ void handleServoMove()
 void handleFindLine()
 {
   char jsonBuffer[JSON_BUFFER_SIZE];
-  findLine(); 
+  findLine();
   snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"findline\":%d}");
   server.send(200, "application/json", jsonBuffer);
 }
@@ -425,7 +424,7 @@ void handleDetectLine()
 void handleTemperature()
 {
   char jsonBuffer[JSON_BUFFER_SIZE];
-  int v = getTemperature(); 
+  int v = getTemperature();
   snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"temperature\":%d}", v);
   server.send(200, "application/json", jsonBuffer);
 }
@@ -631,9 +630,9 @@ void setup()
   bool spiffs_ok = false;
 
   Serial.begin(115200);
-  Serial.println("starting boxbot!!"); 
+  Serial.println("starting boxbot!!");
 
-  setupAccel(); 
+  setupAccel();
 
   while (!Serial)
   {
@@ -700,13 +699,13 @@ void setup()
   server.on("/lisp_code", handleLisp); // execute lisp fragment (for testing)
   server.on("/luminosity1", handleLuminosity1); // get luminosity
    server.on("/luminosity2", handleLuminosity2); // get luminosity
-  server.on("/distance", handleDistance); // get distance 
-  server.on("/accel-x", handleAccel_x); // accelerometer x axis 
+  server.on("/distance", handleDistance); // get distance
+  server.on("/accel-x", handleAccel_x); // accelerometer x axis
   server.on("/accel-y", handleAccel_y); // accelerometer y axis
-  server.on("/accel-z", handleAccel_z); // accelerometer z axis 
-  server.on("/moveServo", handleServoMove); // accelerometer z axis 
+  server.on("/accel-z", handleAccel_z); // accelerometer z axis
+  server.on("/moveServo", handleServoMove); // accelerometer z axis
   //server.on("/line", handleDetectLine); // boolean line or not
-  //server.on("findline", findLine); // find the line 
+  //server.on("findline", findLine); // find the line
   // server.on("/settings", handleSetup);
   server.on("/save", handleSave);
   server.onNotFound(handleNotFound);
@@ -720,8 +719,8 @@ void setup()
   Serial.println("Starting motors...");
   setup_timer();
 
-  // setup the servo 
-  servoSetup(25); 
+  // setup the servo
+  servoSetup(25);
 
   // see what's on the filesystem (and add it to the server)
   addAllFiles();
