@@ -5,6 +5,9 @@
 
 // TODO: Scott - luminosity block
 
+const urlParams = new URLSearchParams(window.location.search);
+const simPort = urlParams.get('simport');
+
 Blockly.Blocks['boxbot_forward'] = {
   init: function() {
     // this.appendDummyInput().appendField("Forward");
@@ -61,13 +64,20 @@ Blockly.Blocks['boxbot_left'] = {
   }
 }
 
+const urlPrefix = simPort ? 'http://localhost:' + simPort : '';
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 async function fetchWait(url) {
-  console.log("fetching: " + url);
-  await fetch(url);
+  const fullUrl = urlPrefix + url;
+  console.log("fetching: " + fullUrl);
+  await fetch(fullUrl);
   var busy = true;
   while (busy) {
-    console.log("busy is " + busy + " " + url);
-    var response = await fetch('/busy');
+    await sleep(50);
+    var response = await fetch(urlPrefix + '/busy');
     if (!response.ok) {
       console.log("error: " + response.status);
       busy = false;
@@ -76,6 +86,7 @@ async function fetchWait(url) {
     console.log(status)
     console.log("waiting got: " + response.status);
     busy = status.busy;
+    console.log("busy is " + busy + " " + url);
   }
 }
 
@@ -114,7 +125,7 @@ function generateCode() {
 }
 
 function runCode() {
-  var code = '(async () => {' + generateCode() + '})()';
+  var code = '(async () => {\n' + generateCode() + '})()';
   console.log("----------");
   console.log(code);
   // TODO: Scott - how do we prevent double-clicking the run button?
