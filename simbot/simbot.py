@@ -86,5 +86,5 @@ class SimbotHandler(http.server.BaseHTTPRequestHandler):
 
 port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
 server = http.server.HTTPServer(('localhost', port), SimbotHandler)
-print('Starting simbot server...')
+print('Starting simbot server on port', port, '...')
 server.serve_forever()
