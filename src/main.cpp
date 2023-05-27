@@ -34,10 +34,15 @@ float linear_turn_fudge = 1.0;
 float linear_motion_fudge = 1.0;
 bool wheels_forward = true;
 
-// Set these to your desired credentials.
-bool use_wifi = false;
-const char *ssid = "silly-bobcat";
-const char *password = (char *)NULL;
+// Either connect to your existing wifi network...
+bool use_wifi = true;
+const char *wifi_name = "YOUR WIFI NETWORK NAME";
+const char *wifi_password = "YOUR WIFI PASSWORD";
+
+// ...or create a wifi hotspot
+const char *hotspot_name = "silly-bobcat";
+const char *hotspot_password = (char *)NULL;
+
 
 // primitive motion plan parsing/interpreting
 #define MAX_PLAN_LEN 1024
@@ -621,10 +626,6 @@ void addAllFiles()
   }
 }
 
-// Replace with your network credentials
-#include "network_credentials.h"
-// const char* network_ssid = "YOUR SSID";
-// const char* network_password = "YOUR PASSWORD";
 
 void setup()
 {
@@ -657,9 +658,9 @@ void setup()
   // try connecting to the wifi network
   if (use_wifi) {
     WiFi.mode(WIFI_STA);
-    WiFi.begin(network_ssid, network_password);
+    WiFi.begin(wifi_name, wifi_password);
     Serial.print("Connecting to ");
-    Serial.print(network_ssid);
+    Serial.print(wifi_name);
     Serial.print(" ");
     for(int i=0; i<20; i++)
     {
@@ -675,8 +676,8 @@ void setup()
       Serial.println(" --> connected.");
   }
   if (!use_wifi || (WiFi.status() != WL_CONNECTED)){
-    Serial.println("Configuring access point...");
-    WiFi.softAP(ssid);
+    Serial.println("Configuring hotspot...");
+    WiFi.softAP(hotspot_name);
     IPAddress myIP = WiFi.softAPIP();
     // WiFi.softAPsetHostname(hostname);
     Serial.print("AP IP address: ");
@@ -686,7 +687,7 @@ void setup()
     Serial.println(WiFi.localIP());
   }
   // mdns_init();
-  // mdns_hostname_set(ssid);
+  // mdns_hostname_set(hotspot_name);
 
   Serial.println("Configuring server...");
   // dynamic pages
