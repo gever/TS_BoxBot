@@ -1,200 +1,53 @@
 html, body {
-    font-family: sans-serif;
-    height: 100%;
-    width: 100%;
-    background-color: #000000;
-  }
-  
-  .banner {
-    font-family: sans-serif;
-    font-weight: bold;
-    color: #28b4f0;
-    background-color: #424242;
-  }
-  
-  .button_body {
-    border-radius: 5px;
-    border-style: solid;
-    border-width: 2px;
-    cursor: pointer;
-    padding: 20px;
-  
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-  }
-  
-  .arrow {
-    font-size: 30px;
-    font-weight: bold;
-  }
-  
-  .unselectable {
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      -khtml-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-  }
-  
-  .formbuilder-group-label {
-    font-weight: bold;
-    font-size: large;
-  }
-  .tooltip-element {
-    font-style: italic;
-    font-size: small;
-  }
-  .form-group {
-    margin-bottom: 20px;
-  }
-  
-  /* motion planning styles */
-  body {
-    margin: 0px;
-    /*
-    width: 1024px;
-    height: 768px;
-    */
-  }
-  
-  td {
-    vertical-align: top;
-  }
-  
-  .secret_link {
-    color: orange;
-  }
-  .secret_link:hover {
-    cursor: pointer;
-  }
-  .container {
-    width: 100%;
-    height: 100%;
-  }
-  
-  .command_container {
-    width: 800px;
-    height: 200px;
-  }
-  
-  .code_container {
-    width: 400px;
-    height: 100%;
-  }
-  
-  .panel_button {
-    padding: 0px;
-    width: 120px;
-    height: 80px;
-    text-align: center;
-    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-    font-weight: bold;
-    font-size: 20px;
-    background-color: white;
-    border-radius: 10px;
-    /* disable text selection */
-    -webkit-user-select: none;
-    user-select: none;
-  }
-  
-  .panel_title {
-    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-    font-weight: bold;
-    font-size: 30px;
-    text-align: left;
-    width: 100%;
-    background-color: rgb(175, 196, 223);
-  }
-  
-  .code_button {
-    padding: 0px;
-    height: 70px;
-    width: 100px;
-    text-align: center;
-    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-    font-weight: bold;
-    font-size: 20px;
-    background-color: rgb(51, 204, 84);
-    border-radius: 10px;
-    /* disable text selection */
-    -webkit-user-select: none;
-    user-select: none;
-  }
-  
-  .clear_plan_button {
-    background-color: orange;
-  }
-  
-  .undo_button {
-    background-color: #ff9500;
-  }
-  
-  .abort_button {
-    background-color: #ff7070;
-  }
-  
-  .button_contents {
-    padding-top: 28%;
-  }
-  
-  .code_button_contents {
-    color: white;
-    padding-top: 20%;
-  }
-  
-  .fwd_style {
-    background-color: yellow;
-  }
-  
-  .bwd_style {
-    background-color: cyan;
-  }
-  
-  .right_style {
-    background-color: #FF914A;
-  }
-  
-  .left_style {
-    background-color: #7FA1FF; 
-  }
-  
-  .servo_style {
-    background-color: white; 
-  }
-  
-  .latest_image {
-    width: 800px;
-    height: 600px;
-    /* background-color: rgb(142, 248, 151); */
-    /* background-image: url("latest_image.jpg"); */
-  }
-  .instructions {
-    background-color: purple;
-  }
-  
-  #lines_of_code {
-    /* height: 485px; */
-    height: 250px;
-    padding-left: 10px;
-  }
-  
-  #coms_status {
-  }
-  
-  pre {
-    margin: 2px;
-    font-size: 20px;
-  }
-  
-  .energy_cost {
-    font-weight: lighter;
-    font-size: 80%;
-    color: grey;
-    float: right;
-    margin-right: 10px;
-  }
+  height: 100%;
+}
+
+body {
+  font-family: sans-serif;
+  background-color: bisque;
+  padding: 0;
+  margin: 0;
+}
+
+#sections {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+#header {
+  display: flex;
+  align-items: center;
+  padding: 1em 0.5em;
+}
+
+#header img {
+  height: 2em;
+  margin-right: 0.5em;
+}
+
+#logo {
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+#controls {
+  margin-left: auto;
+}
+
+#controls button {
+  font-size: 1em;
+  background: white;
+  border: 1px solid #888;
+  border-radius: 0.5em;
+  height: 2.5em;
+  width: 4em;
+}
+
+#controls button:hover {
+  background: #eee;
+}
+
+#blockly-container {
+  flex: 1;
+}

@@ -118,7 +118,7 @@ Blockly.JavaScript['boxbot_left'] = function(block) {
 };
 
 // initialize Blockly
-const workspace = Blockly.inject('blocklyDiv', { toolbox: toolbox });
+const workspace = Blockly.inject('blockly-container', { toolbox: toolbox });
 
 function generateCode() {
   return Blockly.JavaScript.workspaceToCode(workspace);
