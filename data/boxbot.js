@@ -22,6 +22,7 @@ Blockly.Blocks['boxbot_forward'] = {
     this.setHelpUrl("");
   }
 };
+
 Blockly.Blocks['boxbot_backward'] = {
   init: function() {
     // this.appendDummyInput().appendField("Forward");
@@ -36,6 +37,7 @@ Blockly.Blocks['boxbot_backward'] = {
     this.setHelpUrl("");
   }
 };
+
 Blockly.Blocks['boxbot_right'] = {
   init: function() {
     // this.appendDummyInput().appendField("Forward");
@@ -49,7 +51,8 @@ Blockly.Blocks['boxbot_right'] = {
     this.setTooltip("units are degrees");
     this.setHelpUrl("");
   }
-}
+};
+
 Blockly.Blocks['boxbot_left'] = {
   init: function() {
     this.appendValueInput("ANGLE")
@@ -62,25 +65,64 @@ Blockly.Blocks['boxbot_left'] = {
     this.setTooltip("units are degrees");
     this.setHelpUrl("");
   }
-}
+};
+
+Blockly.Blocks['boxbot_luminosity1'] = {
+  init: function() {
+    this.appendDummyInput()
+        .appendField("luminosity1");
+    this.setOutput(true, "Number");
+    this.setColour("#fd6600");
+    this.setTooltip("");
+    this.setHelpUrl("");
+  }
+};
+
+Blockly.Blocks['boxbot_luminosity2'] = {
+  init: function() {
+    this.appendDummyInput()
+        .appendField("luminosity2");
+    this.setOutput(true, "Number");
+    this.setColour("#fd6600");
+    this.setTooltip("");
+    this.setHelpUrl("");
+  }
+};
 
 let running = false;
 let stopRequested = false;
 
 const urlPrefix = simPort ? 'http://localhost:' + simPort : '';
 
+async function bbFetchValue(url, key) {
+  const fullUrl = urlPrefix + url;
+  const response = await fetch(fullUrl);
+  if (!response.ok) {
+    throw new Error('bbFetchValue HTTP error ' + response.status)
+  }
+  const jobj = await response.json();
+  if (!jobj.hasOwnProperty(key)) {
+    throw new Error('bbFetchValue missing key ' + key);
+  }
+  return jobj[key];
+}
+
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function fetchWait(url) {
+async function bbFetchWait(url) {
   const fullUrl = urlPrefix + url;
-  await fetch(fullUrl);
+  const response = await fetch(fullUrl);
+  if (!response.ok) {
+    throw new Error('bbFetchWait HTTP error ' + response.status)
+  }
+  // TODO: check response JSON?
 
   while (true) {
     const response = await fetch(urlPrefix + '/busy');
     if (!response.ok) {
-      throw new Error('/busy HTTP error ' + response.status)
+      throw new Error('bbFetchWait /busy HTTP error ' + response.status)
     }
     const status = await response.json();
     busy = status.busy;
@@ -91,7 +133,7 @@ async function fetchWait(url) {
     if (stopRequested) {
       const response = await fetch(urlPrefix + '/stop');
       if (!response.ok) {
-        throw new Error('/stop HTTP error ' + response.status)
+        throw new Error('bbFetchWait /stop HTTP error ' + response.status)
       }
       // don't bother checking response JSON
 
@@ -103,7 +145,7 @@ async function fetchWait(url) {
 }
 
 function asyncWrap(url) {
-  return "await fetchWait(" + url + ");\n";
+  return "await bbFetchWait(" + url + ");\n";
 }
 
 Blockly.JavaScript['boxbot_forward'] = function(block) {
@@ -111,20 +153,33 @@ Blockly.JavaScript['boxbot_forward'] = function(block) {
   var code = asyncWrap('"/move?dist=" + Math.round(' + distance + ')');
   return code;
 };
+
 Blockly.JavaScript['boxbot_backward'] = function(block) {
   var distance = Blockly.JavaScript.valueToCode(block, 'DISTANCE', Blockly.JavaScript.ORDER_ATOMIC);
   var code = asyncWrap('"/move?dist=" + Math.round(-' + distance + ')');
   return code;
 };
+
 Blockly.JavaScript['boxbot_right'] = function(block) {
   var angle = Blockly.JavaScript.valueToCode(block, 'ANGLE', Blockly.JavaScript.ORDER_ATOMIC);
   var code = asyncWrap('"/turn?angle=" + Math.round(' + angle + ')');
   return code;
 };
+
 Blockly.JavaScript['boxbot_left'] = function(block) {
   var angle = Blockly.JavaScript.valueToCode(block, 'ANGLE', Blockly.JavaScript.ORDER_ATOMIC);
   var code = asyncWrap('"/turn?angle=" + Math.round(-' + angle + ')');
   return code;
+};
+
+Blockly.JavaScript['boxbot_luminosity1'] = function(block) {
+  const code = 'await bbFetchValue("/luminosity1", "luminosity1")';
+  return [code, Blockly.JavaScript.ORDER_AWAIT];
+};
+
+Blockly.JavaScript['boxbot_luminosity2'] = function(block) {
+  const code = 'await bbFetchValue("/luminosity2", "luminosity2")';
+  return [code, Blockly.JavaScript.ORDER_AWAIT];
 };
 
 // initialize Blockly

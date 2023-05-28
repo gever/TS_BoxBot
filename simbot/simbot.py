@@ -3,6 +3,7 @@ import sys
 import http.server
 from urllib.parse import urlparse, parse_qs
 import json
+import random
 
 MOVE_PER_SECOND = 10
 TURN_PER_SECOND = 10
@@ -71,6 +72,14 @@ class SimbotHandler(http.server.BaseHTTPRequestHandler):
       movement_finish_time = time.time() + abs(angle)/TURN_PER_SECOND
 
       self.reply_json({'status': 'ACK'})
+    elif path == '/luminosity1':
+      val = random.randint(0, 1000)
+      print('luminosity1', val)
+      self.reply_json({'luminosity1': val})
+    elif path == '/luminosity2':
+      val = random.randint(0, 1000)
+      print('luminosity2', val)
+      self.reply_json({'luminosity2': val})
     elif path == '/stop':
       print('stop')
       movement_finish_time = 0

@@ -76,6 +76,14 @@ const toolbox = {
             },
           },
         },
+        {
+          'kind': 'block',
+          'type': 'boxbot_luminosity1',
+        },
+        {
+          'kind': 'block',
+          'type': 'boxbot_luminosity2',
+        },
       ],
     },
     {
@@ -102,10 +110,6 @@ const toolbox = {
         {
           'kind': 'block',
           'type': 'logic_boolean',
-        },
-        {
-          'kind': 'block',
-          'type': 'logic_null',
         },
         {
           'kind': 'block',
