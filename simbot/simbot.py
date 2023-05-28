@@ -80,6 +80,10 @@ class SimbotHandler(http.server.BaseHTTPRequestHandler):
       val = random.randint(0, 1000)
       print('luminosity2', val)
       self.reply_json({'luminosity2': val})
+    elif path == '/distance':
+      val = random.randint(0, 100)
+      print('distance', val)
+      self.reply_json({'distance': val})
     elif path == '/stop':
       print('stop')
       movement_finish_time = 0

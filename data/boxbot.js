@@ -89,6 +89,17 @@ Blockly.Blocks['boxbot_luminosity2'] = {
   }
 };
 
+Blockly.Blocks['boxbot_distance'] = {
+  init: function() {
+    this.appendDummyInput()
+        .appendField("distance");
+    this.setOutput(true, "Number");
+    this.setColour("#fd6600");
+    this.setTooltip("");
+    this.setHelpUrl("");
+  }
+};
+
 let running = false;
 let stopRequested = false;
 
@@ -179,6 +190,11 @@ Blockly.JavaScript['boxbot_luminosity1'] = function(block) {
 
 Blockly.JavaScript['boxbot_luminosity2'] = function(block) {
   const code = 'await bbFetchValue("/luminosity2", "luminosity2")';
+  return [code, Blockly.JavaScript.ORDER_AWAIT];
+};
+
+Blockly.JavaScript['boxbot_distance'] = function(block) {
+  const code = 'await bbFetchValue("/distance", "distance")';
   return [code, Blockly.JavaScript.ORDER_AWAIT];
 };
 

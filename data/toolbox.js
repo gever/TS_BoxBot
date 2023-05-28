@@ -84,6 +84,10 @@ const toolbox = {
           'kind': 'block',
           'type': 'boxbot_luminosity2',
         },
+        {
+          'kind': 'block',
+          'type': 'boxbot_distance',
+        },
       ],
     },
     {
