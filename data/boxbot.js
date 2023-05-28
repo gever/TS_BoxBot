@@ -95,10 +95,13 @@ let stopRequested = false;
 
 const urlPrefix = simPort ? 'http://localhost:' + simPort : '';
 
-function appendLogMsg(msg) {
+function appendLogMsg(msg, color) {
   const logList = document.getElementById('log-list');
   const li = document.createElement('li');
   li.textContent = msg;
+  if (color) {
+    li.style.color = color;
+  }
   logList.appendChild(li);
   li.scrollIntoView();
 }
@@ -228,6 +231,7 @@ ${blocklyCode}
     // do nothing
   } else {
     console.log(e);
+    appendLogMsg('ERROR: ' + e.message, 'red');
   }
 }
 running = false;
