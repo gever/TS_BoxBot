@@ -7,6 +7,7 @@ body {
   background-color: bisque;
   padding: 0;
   margin: 0;
+  overflow: hidden;
 }
 
 #sections {
@@ -19,6 +20,7 @@ body {
   display: flex;
   align-items: center;
   padding: 1em 0.5em;
+  border-bottom: 1px solid #ccc;
 }
 
 #header img {
@@ -48,6 +50,31 @@ body {
   background: #eee;
 }
 
-#blockly-container {
+#main {
   flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+#blockly-container {
+  flex: 4;
+}
+
+#log-panel {
+  width: 20em;
+  background-color: #eee;
+  overflow-y: auto;
+}
+
+#log-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  font-family: monospace;
+  font-size: 1.25em;
+  padding: 0.5em;
+}
+
+#log-list li:not(:first-child) {
+  margin-top: 0.25em;
 }

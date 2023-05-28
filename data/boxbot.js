@@ -95,6 +95,21 @@ let stopRequested = false;
 
 const urlPrefix = simPort ? 'http://localhost:' + simPort : '';
 
+function appendLogMsg(msg) {
+  const logList = document.getElementById('log-list');
+  const li = document.createElement('li');
+  li.textContent = msg;
+  logList.appendChild(li);
+  li.scrollIntoView();
+}
+
+function clearLog() {
+  const logList = document.getElementById('log-list');
+  while (logList.firstChild) {
+    logList.removeChild(logList.firstChild);
+  }
+}
+
 async function bbFetchValue(url, key) {
   const fullUrl = urlPrefix + url;
   const response = await fetch(fullUrl);
@@ -145,31 +160,27 @@ async function bbFetchWait(url) {
   }
 }
 
-function asyncWrap(url) {
-  return "await bbFetchWait(" + url + ");\n";
-}
-
 Blockly.JavaScript['boxbot_forward'] = function(block) {
   var distance = Blockly.JavaScript.valueToCode(block, 'DISTANCE', Blockly.JavaScript.ORDER_ATOMIC);
-  var code = asyncWrap('"/move?dist=" + Math.round(' + distance + ')');
+  const code = `appendLogMsg('forward ' + Math.round(${distance}));\nawait bbFetchWait("/move?dist=" + Math.round(${distance}));\n`;
   return code;
 };
 
 Blockly.JavaScript['boxbot_backward'] = function(block) {
   var distance = Blockly.JavaScript.valueToCode(block, 'DISTANCE', Blockly.JavaScript.ORDER_ATOMIC);
-  var code = asyncWrap('"/move?dist=" + Math.round(-' + distance + ')');
+  const code = `appendLogMsg('backward ' + Math.round(${distance}));\nawait bbFetchWait("/move?dist=" + Math.round(-${distance}));\n`;
   return code;
 };
 
 Blockly.JavaScript['boxbot_right'] = function(block) {
   var angle = Blockly.JavaScript.valueToCode(block, 'ANGLE', Blockly.JavaScript.ORDER_ATOMIC);
-  var code = asyncWrap('"/turn?angle=" + Math.round(' + angle + ')');
+  const code = `appendLogMsg('right ' + Math.round(${angle}));\nawait bbFetchWait("/turn?angle=" + Math.round(${angle}));\n`;
   return code;
 };
 
 Blockly.JavaScript['boxbot_left'] = function(block) {
   var angle = Blockly.JavaScript.valueToCode(block, 'ANGLE', Blockly.JavaScript.ORDER_ATOMIC);
-  var code = asyncWrap('"/turn?angle=" + Math.round(-' + angle + ')');
+  const code = `appendLogMsg('left ' + Math.round(${angle}));\nawait bbFetchWait("/turn?angle=" + Math.round(-${angle}));\n`;
   return code;
 };
 
@@ -221,6 +232,7 @@ ${blocklyCode}
 }
 running = false;
 stopRequested = false;
+appendLogMsg('done');
 updateButtons();
 highlightBlock(null);
 })()
@@ -250,12 +262,15 @@ function run() {
 
   running = true;
   stopRequested = false;
+  clearLog();
+  appendLogMsg('running');
   updateButtons();
   eval(code);
 }
 
 function stop() {
   stopRequested = true;
+  appendLogMsg('stopping');
   updateButtons();
 }
 
