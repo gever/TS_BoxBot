@@ -64,6 +64,9 @@ Blockly.Blocks['boxbot_left'] = {
   }
 }
 
+let running = false;
+let stopRequested = false;
+
 const urlPrefix = simPort ? 'http://localhost:' + simPort : '';
 
 function sleep(ms) {
@@ -72,21 +75,30 @@ function sleep(ms) {
 
 async function fetchWait(url) {
   const fullUrl = urlPrefix + url;
-  console.log("fetching: " + fullUrl);
   await fetch(fullUrl);
-  var busy = true;
-  while (busy) {
-    await sleep(50);
-    var response = await fetch(urlPrefix + '/busy');
+
+  while (true) {
+    const response = await fetch(urlPrefix + '/busy');
     if (!response.ok) {
-      console.log("error: " + response.status);
-      busy = false;
+      throw new Error('/busy HTTP error ' + response.status)
     }
-    var status = await response.json();
-    console.log(status)
-    console.log("waiting got: " + response.status);
+    const status = await response.json();
     busy = status.busy;
-    console.log("busy is " + busy + " " + url);
+    if (!busy) {
+      break;
+    }
+
+    if (stopRequested) {
+      const response = await fetch(urlPrefix + '/stop');
+      if (!response.ok) {
+        throw new Error('/stop HTTP error ' + response.status)
+      }
+      // don't bother checking response JSON
+
+      throw new AbortError();
+    }
+
+    await sleep(50);
   }
 }
 
@@ -106,7 +118,7 @@ Blockly.JavaScript['boxbot_backward'] = function(block) {
 };
 Blockly.JavaScript['boxbot_right'] = function(block) {
   var angle = Blockly.JavaScript.valueToCode(block, 'ANGLE', Blockly.JavaScript.ORDER_ATOMIC);
-  var code = asyncWrap('"/turn?angle=" + Math.ound(' + angle + ')');
+  var code = asyncWrap('"/turn?angle=" + Math.round(' + angle + ')');
   return code;
 };
 Blockly.JavaScript['boxbot_left'] = function(block) {
@@ -119,12 +131,17 @@ Blockly.JavaScript['boxbot_left'] = function(block) {
 const workspace = Blockly.inject('blockly-container', { toolbox: toolbox });
 
 // inject calls to highlight the currently executing block
-console.log(Blockly.JavaScript);
-Blockly.JavaScript.STATEMENT_PREFIX = 'highlightBlock(%1);\n';
+Blockly.JavaScript.STATEMENT_PREFIX = 'if (stopRequested) { throw new AbortError(); }\nhighlightBlock(%1);\n';
 Blockly.JavaScript.addReservedWords('highlightBlock');
 function highlightBlock(id) {
   workspace.highlightBlock(id);
 }
+
+function AbortError() {
+  this.message = 'aborted by user request';
+}
+AbortError.prototype = new Error;
+AbortError.prototype.name = 'AbortError';
 
 function generateCode() {
   const blocklyCode = Blockly.JavaScript.workspaceToCode(workspace);
@@ -135,8 +152,15 @@ try {
 
 ${blocklyCode}
 } catch (e) {
-  console.log(e);
+  if (e instanceof AbortError) {
+    // do nothing
+  } else {
+    console.log(e);
+  }
 }
+running = false;
+stopRequested = false;
+updateButtons();
 highlightBlock(null);
 })()
 `;
@@ -144,11 +168,36 @@ highlightBlock(null);
   return wrappedCode;
 }
 
-function runCode() {
+function updateButtons() {
+  if (running) {
+    document.getElementById('run-button').disabled = true;
+    document.getElementById('stop-button').disabled = stopRequested;
+  } else {
+    document.getElementById('run-button').disabled = false;
+    document.getElementById('stop-button').disabled = true;
+  }
+}
+
+function run() {
+  if (running) {
+    return;
+  }
+
   const code = generateCode();
 
   console.log(code);
-  // TODO: Scott - how do we prevent double-clicking the run button?
-  // TODO: Scott - how do abort a running program?
+
+  running = true;
+  stopRequested = false;
+  updateButtons();
   eval(code);
 }
+
+function stop() {
+  stopRequested = true;
+  updateButtons();
+}
+
+updateButtons();
+document.getElementById('run-button').addEventListener('click', run);
+document.getElementById('stop-button').addEventListener('click', stop);
