@@ -106,13 +106,11 @@ Blockly.JavaScript['boxbot_backward'] = function(block) {
 };
 Blockly.JavaScript['boxbot_right'] = function(block) {
   var angle = Blockly.JavaScript.valueToCode(block, 'ANGLE', Blockly.JavaScript.ORDER_ATOMIC);
-  // angle = eval(angle);
-  var code = asyncWrap('"/turn?angle=" + Math.round(' + angle + ')');
+  var code = asyncWrap('"/turn?angle=" + Math.ound(' + angle + ')');
   return code;
 };
 Blockly.JavaScript['boxbot_left'] = function(block) {
   var angle = Blockly.JavaScript.valueToCode(block, 'ANGLE', Blockly.JavaScript.ORDER_ATOMIC);
-  // angle = eval(angle);
   var code = asyncWrap('"/turn?angle=" + Math.round(-' + angle + ')');
   return code;
 };
@@ -120,13 +118,35 @@ Blockly.JavaScript['boxbot_left'] = function(block) {
 // initialize Blockly
 const workspace = Blockly.inject('blockly-container', { toolbox: toolbox });
 
+// inject calls to highlight the currently executing block
+console.log(Blockly.JavaScript);
+Blockly.JavaScript.STATEMENT_PREFIX = 'highlightBlock(%1);\n';
+Blockly.JavaScript.addReservedWords('highlightBlock');
+function highlightBlock(id) {
+  workspace.highlightBlock(id);
+}
+
 function generateCode() {
-  return Blockly.JavaScript.workspaceToCode(workspace);
+  const blocklyCode = Blockly.JavaScript.workspaceToCode(workspace);
+
+  const wrappedCode = `
+(async () => {
+try {
+
+${blocklyCode}
+} catch (e) {
+  console.log(e);
+}
+highlightBlock(null);
+})()
+`;
+
+  return wrappedCode;
 }
 
 function runCode() {
-  var code = '(async () => {\n' + generateCode() + '})()';
-  console.log("----------");
+  const code = generateCode();
+
   console.log(code);
   // TODO: Scott - how do we prevent double-clicking the run button?
   // TODO: Scott - how do abort a running program?
