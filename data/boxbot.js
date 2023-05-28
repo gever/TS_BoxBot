@@ -1,16 +1,8 @@
-// Desc: This file contains:
-//  - the toolbox for the Blockly editor
-//  - the code generator for the Blockly editor
-//  - the initialization of the Blockly editor
-
-// TODO: Scott - luminosity block
-
 const urlParams = new URLSearchParams(window.location.search);
 const simPort = urlParams.get('simport');
 
 Blockly.Blocks['boxbot_forward'] = {
   init: function() {
-    // this.appendDummyInput().appendField("Forward");
     this.appendValueInput("DISTANCE")
       .setCheck("Number")
       .setAlign(Blockly.ALIGN_RIGHT)
@@ -25,7 +17,6 @@ Blockly.Blocks['boxbot_forward'] = {
 
 Blockly.Blocks['boxbot_backward'] = {
   init: function() {
-    // this.appendDummyInput().appendField("Forward");
     this.appendValueInput("DISTANCE")
       .setCheck("Number")
       .setAlign(Blockly.ALIGN_RIGHT)
@@ -40,7 +31,6 @@ Blockly.Blocks['boxbot_backward'] = {
 
 Blockly.Blocks['boxbot_right'] = {
   init: function() {
-    // this.appendDummyInput().appendField("Forward");
     this.appendValueInput("ANGLE")
       .setCheck("Number")
       .setAlign(Blockly.ALIGN_RIGHT)
