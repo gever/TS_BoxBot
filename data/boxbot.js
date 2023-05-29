@@ -140,6 +140,12 @@ async function bbFetchValue(url, key) {
   return jobj[key];
 }
 
+async function bbLogFetchValue(url, key) {
+  const value = await bbFetchValue(url, key);
+  appendLogMsg(key + '? ' + value);
+  return value;
+}
+
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -202,17 +208,17 @@ Blockly.JavaScript['boxbot_left'] = function(block) {
 };
 
 Blockly.JavaScript['boxbot_luminosity1'] = function(block) {
-  const code = 'await bbFetchValue("/luminosity1", "luminosity1")';
+  const code = 'await bbLogFetchValue("/luminosity1", "luminosity1")';
   return [code, Blockly.JavaScript.ORDER_AWAIT];
 };
 
 Blockly.JavaScript['boxbot_luminosity2'] = function(block) {
-  const code = 'await bbFetchValue("/luminosity2", "luminosity2")';
+  const code = 'await bbLogFetchValue("/luminosity2", "luminosity2")';
   return [code, Blockly.JavaScript.ORDER_AWAIT];
 };
 
 Blockly.JavaScript['boxbot_distance'] = function(block) {
-  const code = 'await bbFetchValue("/distance", "distance")';
+  const code = 'await bbLogFetchValue("/distance", "distance")';
   return [code, Blockly.JavaScript.ORDER_AWAIT];
 };
 
