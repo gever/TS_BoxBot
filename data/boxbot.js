@@ -281,3 +281,20 @@ function stop() {
 updateButtons();
 document.getElementById('run-button').addEventListener('click', run);
 document.getElementById('stop-button').addEventListener('click', stop);
+
+// add keyboard shortcuts
+document.addEventListener('keydown', (event) => {
+  // ignore the keypress if it was in an input field
+  if (event.target.tagName === 'INPUT') {
+    return;
+  }
+
+  switch (event.code) {
+    case 'KeyR':
+      run();
+      break;
+    case 'KeyS':
+      stop();
+      break;
+  }
+});
