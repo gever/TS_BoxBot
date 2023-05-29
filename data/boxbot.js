@@ -90,6 +90,20 @@ Blockly.Blocks['boxbot_distance'] = {
   }
 };
 
+Blockly.Blocks['boxbot_log'] = {
+  init: function() {
+    this.appendValueInput("TEXT")
+      .setCheck("String")
+      .setAlign(Blockly.ALIGN_RIGHT)
+      .appendField("log message");
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour("#d09000");
+    this.setTooltip("write a message to the log");
+    this.setHelpUrl("");
+  }
+};
+
 let running = false;
 let stopRequested = false;
 
@@ -200,6 +214,12 @@ Blockly.JavaScript['boxbot_luminosity2'] = function(block) {
 Blockly.JavaScript['boxbot_distance'] = function(block) {
   const code = 'await bbFetchValue("/distance", "distance")';
   return [code, Blockly.JavaScript.ORDER_AWAIT];
+};
+
+Blockly.JavaScript['boxbot_log'] = function(block) {
+  var text = Blockly.JavaScript.valueToCode(block, 'TEXT', Blockly.JavaScript.ORDER_ATOMIC);
+  const code = `appendLogMsg(${text});\n`;
+  return code;
 };
 
 // initialize Blockly

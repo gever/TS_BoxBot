@@ -88,6 +88,20 @@ const toolbox = {
           'kind': 'block',
           'type': 'boxbot_distance',
         },
+        {
+          'kind': 'block',
+          'type': 'boxbot_log',
+          'inputs': {
+            'TEXT': {
+              'shadow': {
+                'type': 'text',
+                'fields': {
+                  'TEXT': 'debug',
+                },
+              },
+            },
+          },
+        },
       ],
     },
     {
