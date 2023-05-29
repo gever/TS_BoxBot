@@ -129,7 +129,12 @@ function clearLog() {
 
 async function bbFetchValue(url, key) {
   const fullUrl = urlPrefix + url;
-  const response = await fetch(fullUrl);
+  let response;
+  try {
+    response = await fetch(fullUrl);
+  } catch (e) {
+    throw new Error('can\'t connect to boxbot');
+  }
   if (!response.ok) {
     throw new Error('bbFetchValue HTTP error ' + response.status)
   }
@@ -152,7 +157,12 @@ function sleep(ms) {
 
 async function bbFetchWait(url) {
   const fullUrl = urlPrefix + url;
-  const response = await fetch(fullUrl);
+  let response;
+  try {
+    response = await fetch(fullUrl);
+  } catch (e) {
+    throw new Error('can\'t connect to boxbot');
+  }
   if (!response.ok) {
     throw new Error('bbFetchWait HTTP error ' + response.status)
   }
