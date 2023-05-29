@@ -334,3 +334,18 @@ document.addEventListener('keydown', (event) => {
       break;
   }
 });
+
+const STORAGE_KEY = 'boxbot-blockly-workspace';
+
+// load the workspace from local storage
+const savedWS = localStorage.getItem(STORAGE_KEY);
+if (savedWS) {
+  Blockly.serialization.workspaces.load(JSON.parse(savedWS), workspace);
+}
+
+// add a listener to save the workspace to local storage on any change
+workspace.addChangeListener((event) => {
+  const serWS = Blockly.serialization.workspaces.save(workspace);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(serWS));
+});
+
