@@ -35,7 +35,7 @@ float linear_motion_fudge = 1.0;
 bool wheels_forward = true;
 
 // Set these to your desired credentials.
-bool use_wifi = false;
+bool use_wifi = true;
 const char *ssid = "silly-bobcat";
 const char *password = (char *)NULL;
 
@@ -158,8 +158,7 @@ public:
 
 // create the motors
 MarsStepper m1(13, 14, 27, 26);
-MarsStepper m2(15, 2, 4, 19); // this is changed! 
-
+MarsStepper m2(15, 2, 4, 19); // this is changed!
 
 const float rot_steps = 2038 * 2;                                                   // one full rotation of the motor shaft
 const float boxbot_body_rad = 75;                                                   // the distance from the pen to the wheel in mm
