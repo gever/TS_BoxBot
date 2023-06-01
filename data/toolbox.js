@@ -76,6 +76,32 @@ const toolbox = {
             },
           },
         },
+        {
+          'kind': 'block',
+          'type': 'boxbot_luminosity1',
+        },
+        {
+          'kind': 'block',
+          'type': 'boxbot_luminosity2',
+        },
+        {
+          'kind': 'block',
+          'type': 'boxbot_distance',
+        },
+        {
+          'kind': 'block',
+          'type': 'boxbot_log',
+          'inputs': {
+            'TEXT': {
+              'shadow': {
+                'type': 'text',
+                'fields': {
+                  'TEXT': 'debug',
+                },
+              },
+            },
+          },
+        },
       ],
     },
     {
@@ -102,10 +128,6 @@ const toolbox = {
         {
           'kind': 'block',
           'type': 'logic_boolean',
-        },
-        {
-          'kind': 'block',
-          'type': 'logic_null',
         },
         {
           'kind': 'block',
