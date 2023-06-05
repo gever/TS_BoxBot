@@ -603,7 +603,7 @@ void handlePageRequest()
 {
   String url = server.uri();
   if (url == "/")
-    url = "/index.html";
+    url = "/blox.html";
   serveGenericPage(url);
 }
 
