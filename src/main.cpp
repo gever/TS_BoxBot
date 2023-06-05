@@ -35,7 +35,7 @@ float linear_motion_fudge = 1.0;
 bool wheels_forward = true;
 
 // Set these to your desired credentials.
-bool use_wifi = true;
+bool use_wifi = false;
 const char *ssid = "silly-bobcat";
 const char *password = (char *)NULL;
 
