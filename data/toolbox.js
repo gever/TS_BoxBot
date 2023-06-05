@@ -17,7 +17,7 @@ const toolbox = {
   'contents': [
     {
       'kind': 'category',
-      'name': 'boxbot',
+      'name': 'Boxbot',
       'colour': '#fb8500',
       'contents': [
         {
