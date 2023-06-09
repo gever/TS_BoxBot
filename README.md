@@ -18,8 +18,8 @@ https://creativecommons.org/licenses/by/4.0/
 
 
 ----------
-ESP32 pinout: https://randomnerdtutorials.com/esp32-pinout-reference-gpios/
-
+ESP32 pinout (for our current board)
+![ESP32 Pinout](https://www.electronicshub.org/wp-content/uploads/2021/02/ESP32-Pinout-1.jpg)
 **Wiring**: 
 
 LEFT motor (aka 2): 
