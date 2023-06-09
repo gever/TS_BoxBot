@@ -22,13 +22,13 @@ ESP32 pinout: https://randomnerdtutorials.com/esp32-pinout-reference-gpios/
 
 **Wiring**: 
 
-LEFT motor: 
+LEFT motor (aka 2): 
 * in1 --> 26
 * in2 --> 27
 * in3 --> 14
 * in4 --> 13
 
-RIGHT motor: 
+RIGHT motor (aka 1): 
 * in1 --> 19
 * in2 --> 4
 * in3 --> 2
