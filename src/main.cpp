@@ -36,7 +36,7 @@ bool wheels_forward = true;
 
 // Set these to your desired credentials.
 bool use_wifi = false;
-const char *ssid = "silly-bobcat";
+const char *ssid = "bwx-kiki";
 const char *password = (char *)NULL;
 
 // primitive motion plan parsing/interpreting
@@ -160,18 +160,13 @@ public:
 MarsStepper m1(13, 14, 27, 26);
 MarsStepper m2(15, 2, 4, 19); // this is changed!
 
-
 const float rot_steps = 2038 * 2;                                                   // one full rotation of the motor shaft
 const float boxbot_body_rad = 55;                                                   // the distance from the pen to the wheel in mm
 const float boxbot_turn_circ = PI * 2.0 * boxbot_body_rad;                          // circumference of circle described by the wheels
 const float boxbot_wheel_rad = 25;                                                  // in mm
 const float boxbot_wheel_circ = PI * 2.0 * boxbot_wheel_rad;                        // circumference of the wheel in mm
 const float boxbot_turn_steps = (boxbot_turn_circ / boxbot_wheel_circ) * rot_steps; // number of steps to turn 360 deg
-const float boxbot_steps_mm = rot_steps / boxbot_wheel_circ;                        // steps per mm
-
-// #define ROT_STEPS  2038*2             // one complete rotation
-// #define ROT_STEPSF ((float)ROT_STEPS)
-// #define ROT_UNIT (ROT_STEPS/16)
+const float boxbot_steps_mm = rot_steps / boxbot_wheel_circ;                        // steps per mm of linear motion
 
 void step_the_motors();
 void IRAM_ATTR onTimer()
