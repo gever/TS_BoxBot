@@ -1,2 +1,2 @@
-void servoSetup(int servoPin); 
-void servoMove(int value);
+void servoGo(int servoPin, int value); 
+void servoInit(int pin); 

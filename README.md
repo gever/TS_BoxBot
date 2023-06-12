@@ -18,17 +18,17 @@ https://creativecommons.org/licenses/by/4.0/
 
 
 ----------
-ESP32 pinout: https://randomnerdtutorials.com/esp32-pinout-reference-gpios/
-
+ESP32 pinout (for our current board)
+![ESP32 Pinout](https://www.electronicshub.org/wp-content/uploads/2021/02/ESP32-Pinout-1.jpg)
 **Wiring**: 
 
-LEFT motor: 
+LEFT motor (aka 2): 
 * in1 --> 26
 * in2 --> 27
 * in3 --> 14
 * in4 --> 13
 
-RIGHT motor: 
+RIGHT motor (aka 1): 
 * in1 --> 19
 * in2 --> 4
 * in3 --> 2
@@ -38,7 +38,7 @@ Luminosity Sensor 1:
 * OUT --> 34
 
 Luminosity Sensor 2: 
-* OUT --> 39 
+* OUT --> 39 aka VN
 
 Distance Sensor: 
 * Trigger -->  5

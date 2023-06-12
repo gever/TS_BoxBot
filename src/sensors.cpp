@@ -65,50 +65,6 @@ int getLuminosity2(void) {
     return (lumAvg);
 }
 
-/*
-I just don't see the utility in this function anymore
-
-int findLine(){
-  Serial.println("starting find line"); 
-  int distance = 20; 
-  int values[distance]; 
-  int increment = 1; 
-  for (int i = 0; i< distance; i++){
-    int newValue = getLuminosity(); 
-    setup_move(1, 10); 
-    values [i] = newValue; 
-    delay(250); 
-  }
-  Serial.print("collected values, printing now"); 
-  for (int i = 0; i< distance; i++){
-    setup_stop(); // make the motors stop while 
-    Serial.print(values[i]);  
-    Serial.print(", "); 
-  }
-  return (1); 
-  Serial.println("done finding the line"); 
-  delay(2500); 
-  Serial.println(); 
-}
-*/
-
-// boolean detects a line from sensor #1 (is this really necessary? )
-bool detectLine(int lineval){
-// A dark black line on a white background has a lineval 0f 4095
-  int currentValue = getLuminosity1(); 
-  if (lineval + 100 > currentValue > lineval - 100){
-    return true; 
-  }
-  else{
-    return false; 
-  }
-}
-
-
-void testMove(){
-  setup_move(1, 20); 
-}
-
 // get distance 
 int getDistance(void){
     //  send pulse

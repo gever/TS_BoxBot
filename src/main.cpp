@@ -389,23 +389,33 @@ void handleAccel_z()
 }
 
 
-void handleServoMove()
+void handleServoGo()
 {
-  char jsonBuffer[JSON_BUFFER_SIZE];
-  servoMove(90);
-  snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"servo moved 90\":%d}");
+  if (server.args())
+  {
+    int servoPin = server.arg(0).toInt(); // pin 
+    int servoAngle = server.arg(1).toInt(); // angle 
+    servoGo(servoPin, servoAngle); 
+  }
+  char jsonBuffer[JSON_BUFFER_SIZE];  
+  snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"servomoved\":%d}");
   server.send(200, "application/json", jsonBuffer);
 }
 
-/*
-void handleFindLine()
+void handleServoInit()
 {
-  char jsonBuffer[JSON_BUFFER_SIZE];
-  findLine();
-  snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"findline\":%d}");
+  if (server.args())
+  {
+    int servoPin = server.arg(0).toInt(); // pin 
+    int servoAngle = server.arg(1).toInt(); // angle 
+    servoInit(servoPin); 
+  }
+  char jsonBuffer[JSON_BUFFER_SIZE];  
+  snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"servoinitialized\":%d}");
   server.send(200, "application/json", jsonBuffer);
 }
-*/
+
+
 
 
 
@@ -598,7 +608,7 @@ void handlePageRequest()
 {
   String url = server.uri();
   if (url == "/")
-    url = "/index.html";
+    url = "/blox.html";
   serveGenericPage(url);
 }
 
@@ -698,9 +708,8 @@ void setup()
   server.on("/accel-x", handleAccel_x); // accelerometer x axis
   server.on("/accel-y", handleAccel_y); // accelerometer y axis
   server.on("/accel-z", handleAccel_z); // accelerometer z axis
-  server.on("/moveServo", handleServoMove); // accelerometer z axis
-  //server.on("/line", handleDetectLine); // boolean line or not
-  //server.on("findline", findLine); // find the line
+  server.on("/servoGo", handleServoGo); // move servo! 
+  server.on("/servoInit", handleServoInit); // move servo! 
   // server.on("/settings", handleSetup);
   server.on("/save", handleSave);
   server.onNotFound(handleNotFound);
@@ -712,11 +721,8 @@ void setup()
 
   // set up the motor step timer
   Serial.println("Starting motors...");
-  setup_timer();
-
-  // setup the servo
-  servoSetup(25);
-
+  setup_timer(); 
+  
   // see what's on the filesystem (and add it to the server)
   addAllFiles();
 

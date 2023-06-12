@@ -107,7 +107,11 @@ Blockly.Blocks['boxbot_log'] = {
 let running = false;
 let stopRequested = false;
 
-const urlPrefix = simPort ? 'http://localhost:' + simPort : '';
+let urlPrefix = '';
+if (simPort) {
+  const parsedUrl = new URL(window.location.href);
+  urlPrefix = parsedUrl.protocol + '//' + parsedUrl.hostname + ':' + simPort;
+}
 
 function appendLogMsg(msg, color) {
   const logList = document.getElementById('log-list');
@@ -232,9 +236,18 @@ Blockly.JavaScript['boxbot_distance'] = function(block) {
   return [code, Blockly.JavaScript.ORDER_AWAIT];
 };
 
+let logCommands = true;
+
 Blockly.JavaScript['boxbot_log'] = function(block) {
   var text = Blockly.JavaScript.valueToCode(block, 'TEXT', Blockly.JavaScript.ORDER_ATOMIC);
   const code = `appendLogMsg(${text});\n`;
+  return code;
+};
+
+Blockly.JavaScript['boxbot_log_commands'] = function(block) {
+  const enableCode = Blockly.JavaScript.valueToCode(block, 'enable', Blockly.JavaScript.ORDER_ATOMIC);
+  console.log('running boxbot_log_commands', enableCode);
+  const code = `logCommands = ${enableCode};\n`;
   return code;
 };
 
@@ -260,6 +273,7 @@ function generateCode() {
   const wrappedCode = `
 (async () => {
 try {
+logCommands = true;
 
 ${blocklyCode}
 } catch (e) {
