@@ -242,6 +242,7 @@ Blockly.JavaScript['boxbot_log'] = function(block) {
   return code;
 };
 
+
 // initialize Blockly
 const workspace = Blockly.inject('blockly-container', { toolbox: toolbox });
 
