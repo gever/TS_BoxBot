@@ -38,7 +38,7 @@ Luminosity Sensor 1:
 * OUT --> 34
 
 Luminosity Sensor 2: 
-* OUT --> 39 
+* OUT --> 39 aka VN
 
 Distance Sensor: 
 * Trigger -->  5
