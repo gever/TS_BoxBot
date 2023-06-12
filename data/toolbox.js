@@ -102,6 +102,20 @@ const toolbox = {
             },
           },
         },
+        {
+          'kind': 'block',
+          'type': 'boxbot_log_commands',
+          'inputs': {
+            'enable': {
+              'shadow': {
+                'type': 'logic_boolean',
+                'fields': {
+                  'BOOL': 'FALSE',
+                },
+              },
+            },
+          },
+        },
       ],
     },
     {
