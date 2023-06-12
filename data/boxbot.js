@@ -104,6 +104,19 @@ Blockly.Blocks['boxbot_log'] = {
   }
 };
 
+Blockly.Blocks['boxbot_log_commands'] = {
+  init: function() {
+    this.appendValueInput("enable")
+        .setCheck("Boolean")
+        .appendField("log commands?");
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour("#d09000");
+    this.setTooltip("should commands be logged?");
+    this.setHelpUrl("");
+  }
+};
+
 let running = false;
 let stopRequested = false;
 
@@ -122,6 +135,12 @@ function appendLogMsg(msg, color) {
   }
   logList.appendChild(li);
   li.scrollIntoView();
+}
+
+function logCommandMsg(msg, color) {
+  if (logCommands) {
+    appendLogMsg(msg, color);
+  }
 }
 
 function clearLog() {
@@ -151,7 +170,7 @@ async function bbFetchValue(url, key) {
 
 async function bbLogFetchValue(url, key) {
   const value = await bbFetchValue(url, key);
-  appendLogMsg(key + '? ' + value);
+  logCommandMsg(key + '? ' + value);
   return value;
 }
 
@@ -199,25 +218,25 @@ async function bbFetchWait(url) {
 
 Blockly.JavaScript['boxbot_forward'] = function(block) {
   var distance = Blockly.JavaScript.valueToCode(block, 'DISTANCE', Blockly.JavaScript.ORDER_ATOMIC);
-  const code = `appendLogMsg('forward ' + Math.round(${distance}));\nawait bbFetchWait("/move?dist=" + Math.round(${distance}));\n`;
+  const code = `logCommandMsg('forward ' + Math.round(${distance}));\nawait bbFetchWait("/move?dist=" + Math.round(${distance}));\n`;
   return code;
 };
 
 Blockly.JavaScript['boxbot_backward'] = function(block) {
   var distance = Blockly.JavaScript.valueToCode(block, 'DISTANCE', Blockly.JavaScript.ORDER_ATOMIC);
-  const code = `appendLogMsg('backward ' + Math.round(${distance}));\nawait bbFetchWait("/move?dist=" + Math.round(-${distance}));\n`;
+  const code = `logCommandMsg('backward ' + Math.round(${distance}));\nawait bbFetchWait("/move?dist=" + Math.round(-${distance}));\n`;
   return code;
 };
 
 Blockly.JavaScript['boxbot_right'] = function(block) {
   var angle = Blockly.JavaScript.valueToCode(block, 'ANGLE', Blockly.JavaScript.ORDER_ATOMIC);
-  const code = `appendLogMsg('right ' + Math.round(${angle}));\nawait bbFetchWait("/turn?angle=" + Math.round(${angle}));\n`;
+  const code = `logCommandMsg('right ' + Math.round(${angle}));\nawait bbFetchWait("/turn?angle=" + Math.round(${angle}));\n`;
   return code;
 };
 
 Blockly.JavaScript['boxbot_left'] = function(block) {
   var angle = Blockly.JavaScript.valueToCode(block, 'ANGLE', Blockly.JavaScript.ORDER_ATOMIC);
-  const code = `appendLogMsg('left ' + Math.round(${angle}));\nawait bbFetchWait("/turn?angle=" + Math.round(-${angle}));\n`;
+  const code = `logCommandMsg('left ' + Math.round(${angle}));\nawait bbFetchWait("/turn?angle=" + Math.round(-${angle}));\n`;
   return code;
 };
 
@@ -236,9 +255,18 @@ Blockly.JavaScript['boxbot_distance'] = function(block) {
   return [code, Blockly.JavaScript.ORDER_AWAIT];
 };
 
+let logCommands = true;
+
 Blockly.JavaScript['boxbot_log'] = function(block) {
   var text = Blockly.JavaScript.valueToCode(block, 'TEXT', Blockly.JavaScript.ORDER_ATOMIC);
   const code = `appendLogMsg(${text});\n`;
+  return code;
+};
+
+Blockly.JavaScript['boxbot_log_commands'] = function(block) {
+  const enableCode = Blockly.JavaScript.valueToCode(block, 'enable', Blockly.JavaScript.ORDER_ATOMIC);
+  console.log('running boxbot_log_commands', enableCode);
+  const code = `logCommands = ${enableCode};\n`;
   return code;
 };
 
@@ -264,6 +292,7 @@ function generateCode() {
   const wrappedCode = `
 (async () => {
 try {
+logCommands = true;
 
 ${blocklyCode}
 } catch (e) {
