@@ -367,17 +367,129 @@ document.addEventListener('keydown', (event) => {
   }
 });
 
-const STORAGE_KEY = 'boxbot-blockly-workspace';
-
-// load the workspace from local storage
-const savedWS = localStorage.getItem(STORAGE_KEY);
-if (savedWS) {
-  Blockly.serialization.workspaces.load(JSON.parse(savedWS), workspace);
+function genRandom32() {
+  return Math.random().toString(16).substring(2, 10);
 }
+function genRandomUID() {
+  return genRandom32() + genRandom32();
+}
+
+const OLD_PROGRAM_KEY = 'boxbot-blockly-workspace';
+const PROGRAM_INDEX_KEY = 'boxbot-blockly-progidx';
+const PROGRAM_KEY_PREFIX = 'boxbot-blockly-program-';
+const DEFAULT_PROGRAM_NAME = 'my program';
+
+/*
+interface ProgramIndex {
+  currentId: string;
+  programs: // object with keys as program ids and values as program names
+}
+*/
+let programIndex;
+
+function loadProgram(progId) {
+  const progJSON = localStorage.getItem(PROGRAM_KEY_PREFIX + progId);
+  prog = JSON.parse(progJSON);
+  Blockly.serialization.workspaces.load(prog, workspace);
+}
+
+function saveProgramIndex() {
+  localStorage.setItem(PROGRAM_INDEX_KEY, JSON.stringify(programIndex));
+}
+
+function saveCurrentProgram() {
+  const serWS = Blockly.serialization.workspaces.save(workspace);
+  localStorage.setItem(PROGRAM_KEY_PREFIX + programIndex.currentId, JSON.stringify(serWS));
+}
+
+function updateProgramSelector() {
+  const selectElem = document.getElementById('program-selector');
+  selectElem.innerHTML = '';
+  for (const progId in programIndex.programs) {
+    const optionElem = document.createElement('option');
+    optionElem.value = progId;
+    optionElem.innerText = programIndex.programs[progId];
+    selectElem.appendChild(optionElem);
+  }
+  selectElem.value = programIndex.currentId;
+}
+
+// load from local storage
+programIndexJSON = localStorage.getItem(PROGRAM_INDEX_KEY);
+if (programIndexJSON) {
+  programIndex = JSON.parse(programIndexJSON);
+  loadProgram(programIndex.currentId);
+} else {
+  // there was no program index, so check old storage system
+  const savedWS = localStorage.getItem(OLD_PROGRAM_KEY);
+  if (savedWS) {
+    Blockly.serialization.workspaces.load(JSON.parse(savedWS), workspace);
+  }
+
+  // initialize the program index
+  const progId = genRandomUID();
+  programIndex = {
+    currentId: progId,
+    programs: {
+      [progId]: DEFAULT_PROGRAM_NAME,
+    },
+  };
+
+  saveProgramIndex();
+}
+
+saveCurrentProgram();
+updateProgramSelector();
+
+document.getElementById('program-selector').addEventListener('change', (event) => {
+  const progId = event.target.value;
+  programIndex.currentId = progId;
+  saveProgramIndex();
+  loadProgram(progId);
+});
+
+document.getElementById('new-program-button').addEventListener('click', (event) => {
+  const progId = genRandomUID();
+  programIndex.currentId = progId;
+  programIndex.programs[progId] = DEFAULT_PROGRAM_NAME + ' ' + Object.keys(programIndex.programs).length;
+  saveProgramIndex();
+  updateProgramSelector();
+  workspace.clear();
+});
+
+document.getElementById('rename-program-button').addEventListener('click', (event) => {
+  const newName = prompt('New program name:');
+  if (!newName) {
+    return;
+  }
+  programIndex.programs[programIndex.currentId] = newName;
+  saveProgramIndex();
+  updateProgramSelector();
+});
+
+document.getElementById('delete-program-button').addEventListener('click', (event) => {
+  if (confirm('Are you sure you want to delete this program?')) {
+    delete programIndex.programs[programIndex.currentId];
+
+    // if there are no programs left, create a new one
+    if (Object.keys(programIndex.programs).length === 0) {
+      const progId = genRandomUID();
+      programIndex.currentId = progId;
+      programIndex.programs[progId] = DEFAULT_PROGRAM_NAME;
+      workspace.clear();
+      saveCurrentProgram();
+    } else {
+      // otherwise, set the current program to the first one
+      programIndex.currentId = Object.keys(programIndex.programs)[0];
+      loadProgram(programIndex.currentId);
+    }
+    saveProgramIndex();
+    updateProgramSelector();
+  }
+});
 
 // add a listener to save the workspace to local storage on any change
 workspace.addChangeListener((event) => {
-  const serWS = Blockly.serialization.workspaces.save(workspace);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(serWS));
+  saveCurrentProgram();
 });
 

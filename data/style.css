@@ -33,11 +33,32 @@ body {
   font-weight: bold;
 }
 
-#controls {
+#storage-controls {
+  margin-left: 2em;
+}
+
+#storage-controls button {
+  background: white;
+  border: 1px solid #888;
+  border-radius: 0.5em;
+  height: 2em;
+  width: 5em;
+}
+
+#storage-controls button:hover {
+  background: #eee;
+}
+
+#storage-controls select {
+  width: 10em;
+  height: 2em;
+}
+
+#exec-controls {
   margin-left: auto;
 }
 
-#controls button {
+#exec-controls button {
   font-size: 1em;
   background: white;
   border: 1px solid #888;
@@ -46,7 +67,7 @@ body {
   width: 6em;
 }
 
-#controls button:hover {
+#exec-controls button:hover {
   background: #eee;
 }
 
