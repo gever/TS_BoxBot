@@ -117,6 +117,34 @@ class SimbotHandler(http.server.BaseHTTPRequestHandler):
       movement_finish_time = time.time() + abs(angle)/SERVO_TURN_PER_SECOND
 
       self.reply_json({'status': 'ACK'})
+    elif path == '/led':
+      if 'pin' not in params:
+        self.bad_request('missing pin parameter')
+        return
+
+      if 'state' not in params:
+        self.bad_request('missing state parameter')
+        return
+
+      try:
+        pin = int(params['pin'][0])
+      except ValueError:
+        self.bad_request('invalid pin parameter')
+        return
+
+      try:
+        state = int(params['state'][0])
+      except ValueError:
+        self.bad_request('invalid state parameter')
+        return
+
+      if (state != 0) and (state != 1):
+        self.bad_request('state must be 0 or 1')
+        return
+
+      print('led', pin, state)
+
+      self.reply_json({'status': 'ACK'})
     elif path == '/luminosity1':
       val = random.randint(0, 1000)
       print('luminosity1', val)

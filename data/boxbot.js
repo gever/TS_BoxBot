@@ -90,6 +90,23 @@ Blockly.Blocks['boxbot_set_servo_angle'] = {
   }
 };
 
+Blockly.Blocks['boxbot_led'] = {
+  init: function() {
+    this.appendValueInput("PIN")
+        .setCheck("Number")
+        .appendField("set LED on pin");
+    this.appendValueInput("STATE")
+        .setCheck("Boolean")
+        .appendField("to");
+    this.setInputsInline(true);
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour("#e07700");
+    this.setTooltip("");
+    this.setHelpUrl("");
+  }
+};
+
 Blockly.Blocks['boxbot_luminosity1'] = {
   init: function() {
     this.appendDummyInput()
@@ -298,6 +315,20 @@ Blockly.JavaScript['boxbot_set_servo_angle'] = function(block) {
   const pinCode = Blockly.JavaScript.valueToCode(block, 'PIN', Blockly.JavaScript.ORDER_ATOMIC);
   const angleCode = Blockly.JavaScript.valueToCode(block, 'ANGLE', Blockly.JavaScript.ORDER_ATOMIC);
   const code = `await bbSetServoAngle(${pinCode}, ${angleCode});\n`;
+  return code;
+};
+
+async function bbLed(pin, state) {
+  if (!Number.isInteger(pin) || (pin < 0)) {
+    return;
+  }
+  logCommandMsg('set LED pin ' + pin + ' state ' + state);
+  await bbFetchWait("/led?pin=" + pin + "&state=" + (state ? 1 : 0));
+}
+Blockly.JavaScript['boxbot_led'] = function(block) {
+  const pinCode = Blockly.JavaScript.valueToCode(block, 'PIN', Blockly.JavaScript.ORDER_ATOMIC);
+  const stateCode = Blockly.JavaScript.valueToCode(block, 'STATE', Blockly.JavaScript.ORDER_ATOMIC);
+  const code = `await bbLed(${pinCode}, ${stateCode});\n`;
   return code;
 };
 

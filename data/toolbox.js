@@ -118,6 +118,28 @@ const toolbox = {
         },
         {
           'kind': 'block',
+          'type': 'boxbot_led',
+          'inputs': {
+            'PIN': {
+              'shadow': {
+                'type': 'math_number',
+                'fields': {
+                  'NUM': 0,
+                },
+              },
+            },
+            'STATE': {
+              'shadow': {
+                'type': 'logic_boolean',
+                'fields': {
+                  'BOOL': 'TRUE',
+                },
+              },
+            },
+          },
+        },
+        {
+          'kind': 'block',
           'type': 'boxbot_init_servo',
           'inputs': {
             'PIN': {
