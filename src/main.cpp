@@ -393,26 +393,21 @@ void handleServoGo()
 {
   if (server.args())
   {
-    int servoPin = server.arg(0).toInt(); // pin 
-    int servoAngle = server.arg(1).toInt(); // angle 
-    servoGo(servoPin, servoAngle); 
+    int servoPin = server.arg(0).toInt(); // pin
+    int servoAngle = server.arg(1).toInt(); // angle
+    servoGo(servoPin, servoAngle);
   }
-  char jsonBuffer[JSON_BUFFER_SIZE];  
-  snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"servomoved\":%d}");
-  server.send(200, "application/json", jsonBuffer);
+  server.send(200, "application/json", "{\"status\":\"ACK\"}");
 }
 
 void handleServoInit()
 {
   if (server.args())
   {
-    int servoPin = server.arg(0).toInt(); // pin 
-    int servoAngle = server.arg(1).toInt(); // angle 
-    servoInit(servoPin); 
+    int servoPin = server.arg(0).toInt(); // pin
+    servoInit(servoPin);
   }
-  char jsonBuffer[JSON_BUFFER_SIZE];  
-  snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"servoinitialized\":%d}");
-  server.send(200, "application/json", jsonBuffer);
+  server.send(200, "application/json", "{\"status\":\"ACK\"}");
 }
 
 
@@ -708,8 +703,8 @@ void setup()
   server.on("/accel-x", handleAccel_x); // accelerometer x axis
   server.on("/accel-y", handleAccel_y); // accelerometer y axis
   server.on("/accel-z", handleAccel_z); // accelerometer z axis
-  server.on("/servoGo", handleServoGo); // move servo! 
-  server.on("/servoInit", handleServoInit); // move servo! 
+  server.on("/servoGo", handleServoGo); // move servo!
+  server.on("/servoInit", handleServoInit); // move servo!
   // server.on("/settings", handleSetup);
   server.on("/save", handleSave);
   server.onNotFound(handleNotFound);
@@ -721,8 +716,8 @@ void setup()
 
   // set up the motor step timer
   Serial.println("Starting motors...");
-  setup_timer(); 
-  
+  setup_timer();
+
   // see what's on the filesystem (and add it to the server)
   addAllFiles();
 
