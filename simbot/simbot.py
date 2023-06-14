@@ -7,6 +7,7 @@ import random
 
 MOVE_PER_SECOND = 10
 TURN_PER_SECOND = 10
+SERVO_TURN_PER_SECOND = 600
 
 movement_finish_time = 0
 
@@ -70,6 +71,50 @@ class SimbotHandler(http.server.BaseHTTPRequestHandler):
       print('turn', angle)
 
       movement_finish_time = time.time() + abs(angle)/TURN_PER_SECOND
+
+      self.reply_json({'status': 'ACK'})
+    elif path == '/servoInit':
+      if 'pin' not in params:
+        self.bad_request('missing pin parameter')
+        return
+
+      try:
+        pin = int(params['pin'][0])
+      except ValueError:
+        self.bad_request('invalid pin parameter')
+        return
+
+      print('servoInit', pin)
+
+      self.reply_json({'status': 'ACK'})
+    elif path == '/servoGo':
+      if 'pin' not in params:
+        self.bad_request('missing pin parameter')
+        return
+
+      if 'angle' not in params:
+        self.bad_request('missing angle parameter')
+        return
+
+      try:
+        pin = int(params['pin'][0])
+      except ValueError:
+        self.bad_request('invalid pin parameter')
+        return
+
+      try:
+        angle = int(params['angle'][0])
+      except ValueError:
+        self.bad_request('invalid angle parameter')
+        return
+
+      if abs(angle) > 90:
+        self.bad_request('angle must be between -90 and 90')
+        return
+
+      print('servoGo', pin, angle)
+
+      movement_finish_time = time.time() + abs(angle)/SERVO_TURN_PER_SECOND
 
       self.reply_json({'status': 'ACK'})
     elif path == '/luminosity1':
