@@ -13,6 +13,7 @@
 #include "util.h"
 #include "sensors.h"
 #include "servo.h"
+#include "led.h"
 
 // setting up lisp runtime
 #include "lisp.h"
@@ -410,6 +411,16 @@ void handleServoInit()
   server.send(200, "application/json", "{\"status\":\"ACK\"}");
 }
 
+void handleLED()
+{
+  if (server.args())
+  {
+    int pin = server.arg(0).toInt(); // pin
+    bool status = server.arg(1).toInt(); // status
+    ledGo(pin, status);
+  }
+  server.send(200, "application/json", "{\"status\":\"ACK\"}"); 
+}
 
 
 
@@ -705,6 +716,7 @@ void setup()
   server.on("/accel-z", handleAccel_z); // accelerometer z axis
   server.on("/servoGo", handleServoGo); // move servo!
   server.on("/servoInit", handleServoInit); // move servo!
+  server.on("/led", handleLED); // led 
   // server.on("/settings", handleSetup);
   server.on("/save", handleSave);
   server.onNotFound(handleNotFound);
