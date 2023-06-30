@@ -259,6 +259,13 @@ const toolbox = {
         },
         {
           'kind': 'block',
+          'type': 'controls_if',
+          'extraState': {
+            'hasElse': true,
+          },
+        },
+        {
+          'kind': 'block',
           'type': 'logic_compare',
         },
         {
