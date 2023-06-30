@@ -361,8 +361,27 @@ Blockly.JavaScript['boxbot_log_commands'] = function(block) {
   return code;
 };
 
+// create custom theme
+const theme = Blockly.Theme.defineTheme('boxbotTheme', {
+  'base': Blockly.Themes.Classic,
+  'blockStyles': {
+    'math_blocks': {
+      'colourPrimary': '#e75480',
+    },
+  },
+  'categoryStyles': {
+    'math_category': {
+      'colour': '#e75480',
+    },
+  },
+  'startHats': true
+});
+
 // initialize Blockly
-const workspace = Blockly.inject('blockly-container', { toolbox: toolbox });
+const workspace = Blockly.inject('blockly-container', {
+  toolbox: toolbox,
+  theme: theme,
+});
 
 // inject calls to highlight the currently executing block
 Blockly.JavaScript.STATEMENT_PREFIX = 'if (stopRequested) { throw new AbortError(); }\nhighlightBlock(%1);\n';
