@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Robot Controller</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #F3F3F3;
+            margin: 0;
+        }
+        .controller {
+            border: 1px solid #333;
+            padding: 20px;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #FFF;
+            box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.2);
+        }
+        .direction-buttons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px;
+        }
+        button {
+            border: none;
+            background-color: #333;
+            color: #FFF;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="controller">
+        <h2>Robot Controller</h2>
+        <div class="direction-buttons">
+            <button id="fwd">Forward</button>
+        </div>
+        <div class="direction-buttons">
+            <button id="left">Left</button>
+            <button id="stop">Stop</button>
+            <button id="right">Right</button>
+        </div>
+        <div class="direction-buttons">
+            <button id="bwd">Backward</button>
+        </div>
+    </div>
+
+    <script>
+        // Assigning event listeners to the buttons
+        document.getElementById('fwd').addEventListener('click', function() {
+            console.log('Fwd');
+            fetch("/move?dist=100");
+        });
+
+        document.getElementById('bwd').addEventListener('click', function() {
+            console.log('Bwd');
+            fetch("/move?dist=-100");
+        });
+
+        document.getElementById('left').addEventListener('click', function() {
+            console.log('Left');
+            fetch("/turn?angle=-180");
+        });
+
+        document.getElementById('right').addEventListener('click', function() {
+            console.log('Right');
+            fetch("/turn?angle=180");
+        });
+
+        document.getElementById('stop').addEventListener('click', function() {
+            console.log('Stopping');
+            fetch("/stop");
+        });
+    </script>
+</body>
+</html>

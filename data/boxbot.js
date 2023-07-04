@@ -381,6 +381,7 @@ const theme = Blockly.Theme.defineTheme('boxbotTheme', {
 const workspace = Blockly.inject('blockly-container', {
   toolbox: toolbox,
   theme: theme,
+  media: '/',
 });
 
 // inject calls to highlight the currently executing block

@@ -306,10 +306,12 @@ void handleMove()
 
 void handleTurn()
 {
+  // TODO: clean up the semantics of the turn command
+  //       (there is legacy API here that is from the old BU code)
   if (server.args())
   {
     int v = server.arg(0).toInt();
-    setup_turn(v < 0 ? 0 : 1, ABS(v)); // negative for left turns
+    setup_turn(v < 0 ? 1 : 0, ABS(v)); // negative for left turns
     Serial.println("handleTurn: " + String(v));
   }
   server.send(200, "application/json", "{\"status\":\"ACK\"}");
@@ -531,6 +533,14 @@ void serveGenericPage(String url)
     contentType = "text/css";
   else if (url.endsWith(".ico"))
     contentType = "image/x-icon";
+  else if (url.endsWith(".mp3"))
+    contentType = "audio/mpeg";
+  else if (url.endsWith(".png"))
+    contentType = "image/png";
+  else if (url.endsWith(".svg"))
+    contentType = "image/svg+xml";
+  else if (url.endsWith(".jpg"))
+    contentType = "image/jpeg";
   else if (url.endsWith(".zip") || url.endsWith(".gz"))
     contentType = "application/javascript";
   Serial.println(contentType);
