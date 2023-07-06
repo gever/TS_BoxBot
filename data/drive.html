@@ -89,6 +89,32 @@
             console.log('Stopping');
             fetch("/stop");
         });
+
+        // Keyboard controls
+        document.addEventListener('keydown', (event) => {
+            // ignore the keypress if it was in an input field
+            if (event.target.tagName === 'INPUT') {
+                return;
+            }
+
+            switch (event.code) {
+                case 'ArrowUp':
+                fetch("/move?dist=100");
+                break;
+                case 'ArrowDown':
+                fetch("/move?dist=-100");
+                break;
+                case 'ArrowLeft':
+                fetch("/turn?angle=-180");
+                break;
+                case 'ArrowRight':
+                fetch("/turn?angle=180");
+                break;
+                case 'Space':
+                fetch("/stop");
+                break;
+            }
+        });
     </script>
 </body>
 </html>
