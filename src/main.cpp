@@ -37,7 +37,7 @@ bool wheels_forward = true;
 
 // Set these to your desired credentials.
 bool use_wifi = false;
-const char *ssid = "bwx-kiki";
+const char *ssid = "wacky-squirrel";
 const char *password = (char *)NULL;
 
 // primitive motion plan parsing/interpreting

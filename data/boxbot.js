@@ -307,7 +307,7 @@ async function bbSetServoAngle(pin, angle) {
   if (!Number.isInteger(pin) || (pin < 0)) {
     return;
   }
-  const adjAngle = Math.min(90, Math.max(-90, Math.round(angle)));
+  const adjAngle = Math.round(angle); // = Math.min(90, Math.max(-90, Math.round(angle)));
   logCommandMsg('set servo pin ' + pin + ' angle ' + adjAngle);
   await bbFetchWait("/servoGo?pin=" + pin + "&angle=" + adjAngle);
 }
