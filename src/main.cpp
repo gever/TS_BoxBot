@@ -18,6 +18,7 @@
 // setting up lisp runtime
 #include "lisp.h"
 typedef Lisp<8192, 2048> MySmallLisp;
+MySmallLisp lisp;
 
 #define SDEBUG(label, x) \
   {                      \
@@ -548,8 +549,6 @@ void serveGenericPage(String url)
   file.close();
 }
 
-typedef Lisp<8192, 2048> MySmallLisp;
-MySmallLisp lisp;
 void lispSetup()
 {
   char buf[4096];
