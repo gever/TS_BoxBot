@@ -200,9 +200,14 @@ function clearLog() {
   }
 }
 
+function debugLogWithTime(msg) {
+  console.log((Date.now()/1000) + ' ' + msg);
+}
+
 async function bbFetchValue(url, key) {
   const fullUrl = urlPrefix + url;
   let response;
+  debugLogWithTime('bbFetchValue before fetch ' + fullUrl);
   try {
     response = await fetch(fullUrl);
   } catch (e) {
@@ -211,10 +216,12 @@ async function bbFetchValue(url, key) {
   if (!response.ok) {
     throw new Error('bbFetchValue HTTP error ' + response.status)
   }
+  debugLogWithTime('bbFetchValue before json decode ' + fullUrl);
   const jobj = await response.json();
   if (!jobj.hasOwnProperty(key)) {
     throw new Error('bbFetchValue missing key ' + key);
   }
+  debugLogWithTime('bbFetchValue returning ' + fullUrl + ' ' + key);
   return jobj[key];
 }
 
@@ -231,6 +238,7 @@ function sleep(ms) {
 async function bbFetchWait(url) {
   const fullUrl = urlPrefix + url;
   let response;
+  debugLogWithTime('bbFetchWait before initial fetch ' + fullUrl);
   try {
     response = await fetch(fullUrl);
   } catch (e) {
@@ -242,10 +250,12 @@ async function bbFetchWait(url) {
   // TODO: check response JSON?
 
   while (true) {
+    debugLogWithTime('bbFetchWait before busy fetch ' + fullUrl);
     const response = await fetch(urlPrefix + '/busy');
     if (!response.ok) {
       throw new Error('bbFetchWait /busy HTTP error ' + response.status)
     }
+    debugLogWithTime('bbFetchWait before json decode ' + fullUrl);
     const status = await response.json();
     busy = status.busy;
     if (!busy) {
@@ -262,8 +272,11 @@ async function bbFetchWait(url) {
       throw new AbortError();
     }
 
+    debugLogWithTime('bbFetchWait before sleep ' + fullUrl);
     await sleep(50);
   }
+
+  debugLogWithTime('bbFetchWait returning ' + fullUrl);
 }
 
 Blockly.JavaScript['boxbot_forward'] = function(block) {
