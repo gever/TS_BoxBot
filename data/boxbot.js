@@ -57,6 +57,20 @@ Blockly.Blocks['boxbot_left'] = {
   }
 };
 
+Blockly.Blocks['boxbot_wait'] = {
+  init: function() {
+    this.appendValueInput("TIME")
+      .setCheck("Number")
+      .setAlign(Blockly.ALIGN_RIGHT)
+      .appendField("wait");
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour("#fda030");
+    this.setTooltip("units are seconds");
+    this.setHelpUrl("");
+  }
+};
+
 Blockly.Blocks['boxbot_init_servo'] = {
   init: function() {
     this.appendValueInput("PIN")
@@ -300,6 +314,30 @@ Blockly.JavaScript['boxbot_right'] = function(block) {
 Blockly.JavaScript['boxbot_left'] = function(block) {
   var angle = Blockly.JavaScript.valueToCode(block, 'ANGLE', Blockly.JavaScript.ORDER_ATOMIC);
   const code = `logCommandMsg('left ' + Math.round(${angle}));\nawait bbFetchWait("/turn?angle=" + Math.round(-${angle}));\n`;
+  return code;
+};
+
+function wait(time) {
+  return new Promise(resolve => setTimeout(resolve, 1000*time));
+}
+
+async function interruptableWait(time) {
+  const endTime = Date.now() + 1000*time;
+  while (true) {
+    const time = Date.now();
+    if (time >= endTime) {
+      break;
+    }
+    if (stopRequested) {
+      throw new AbortError();
+    }
+    await wait(0.05);
+  }
+}
+
+Blockly.JavaScript['boxbot_wait'] = function(block) {
+  var time = Blockly.JavaScript.valueToCode(block, 'TIME', Blockly.JavaScript.ORDER_ATOMIC);
+  const code = `logCommandMsg('waiting ' + ${time} + ' seconds');\nawait interruptableWait(${time});\n`;
   return code;
 };
 
