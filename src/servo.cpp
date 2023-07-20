@@ -15,7 +15,10 @@ void servoGo(int pin, int value){
 
 void servoInit(int pin){
   myservo.setPeriodHertz(50);    // standard 50 hz servo
-  myservo.attach(pin, 1000, 2000); 
+  // proper initialization for 9g servo
+  //#define DEFAULT_uS_LOW 400
+  //#define DEFAULT_uS_HIGH 2400
+  myservo.attach(pin, 400, 2400); 
   
   // servoGo(pin, 0); 
 
