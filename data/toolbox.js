@@ -78,6 +78,20 @@ const toolbox = {
         },
         {
           'kind': 'block',
+          'type': 'boxbot_wait',
+          'inputs': {
+            'TIME': {
+              'shadow': {
+                'type': 'math_number',
+                'fields': {
+                  'NUM': 1,
+                },
+              },
+            },
+          },
+        },
+        {
+          'kind': 'block',
           'type': 'boxbot_luminosity1',
         },
         {
