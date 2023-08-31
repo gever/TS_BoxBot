@@ -166,9 +166,34 @@ class SimbotHandler(http.server.BaseHTTPRequestHandler):
       print('busy', busy)
       self.reply_json({'busy': busy})
     else:
-      self.send_response(404)
+      # serve static files
+      print("serving static file: ", path)
+      print("type of path: ", type(path))
+      contentType = "text/plain"
+      if (path.endswith(".html")):
+        contentType = "text/html"
+      elif (path.endswith(".js")):
+        contentType = "text/javascript"
+      elif (path.endswith(".css")):
+        contentType = "text/css"
+      elif (path.endswith(".ico")):
+        contentType = "image/x-icon"
+      elif (path.endswith(".mp3")):
+        contentType = "audio/mpeg"
+      elif (path.endswith(".png")):
+        contentType = "image/png"
+      elif (path.endswith(".svg")):
+        contentType = "image/svg+xml"
+      elif (path.endswith(".jpg")):
+        contentType = "image/jpeg"
+      elif (path.endswith(".zip") or path.endswith(".gz")):
+        contentType = "application/javascript"
+      self.send_response(200)
+      self.send_header('Content-Type', contentType)
       self.end_headers()
-      self.wfile.write(b'404 Not Found')
+      print('serving: ', path, 'content type: ', contentType)
+      with open(path[1:], 'rb') as f:
+        self.wfile.write(f.read())
 
 port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
 server = http.server.HTTPServer(('0.0.0.0', port), SimbotHandler)
