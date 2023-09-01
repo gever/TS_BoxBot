@@ -1,3 +1,4 @@
+import os
 import time
 import sys
 import http.server
@@ -167,8 +168,11 @@ class SimbotHandler(http.server.BaseHTTPRequestHandler):
       self.reply_json({'busy': busy})
     else:
       # serve static files
-      print("serving static file: ", path)
-      print("type of path: ", type(path))
+      print('request for path:', path)
+
+      if path == '/':
+        path = '/blox.html'
+
       contentType = "text/plain"
       if (path.endswith(".html")):
         contentType = "text/html"
@@ -188,12 +192,24 @@ class SimbotHandler(http.server.BaseHTTPRequestHandler):
         contentType = "image/jpeg"
       elif (path.endswith(".zip") or path.endswith(".gz")):
         contentType = "application/javascript"
-      self.send_response(200)
-      self.send_header('Content-Type', contentType)
-      self.end_headers()
-      print('serving: ', path, 'content type: ', contentType)
-      with open(path[1:], 'rb') as f:
-        self.wfile.write(f.read())
+
+      assert path.startswith('/')
+      fn = os.path.join('../data', path[1:])
+      print('serving file', repr(fn), 'with content type', contentType)
+
+      try:
+        with open(fn, 'rb') as f:
+          self.send_response(200)
+          self.send_header('Content-Type', contentType)
+          if (path.endswith(".zip") or path.endswith(".gz")):
+            self.send_header('Content-Encoding', 'gzip')
+          self.end_headers()
+          self.wfile.write(f.read())
+      except FileNotFoundError:
+        print('file not found')
+        self.send_response(404)
+        self.end_headers()
+        self.wfile.write(b'404 Not Found')
 
 port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
 server = http.server.HTTPServer(('0.0.0.0', port), SimbotHandler)
