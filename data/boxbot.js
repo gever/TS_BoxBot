@@ -1,6 +1,3 @@
-const urlParams = new URLSearchParams(window.location.search);
-const simPort = urlParams.get('simport');
-
 Blockly.Blocks['boxbot_forward'] = {
   init: function() {
     this.appendValueInput("DISTANCE")
@@ -185,10 +182,6 @@ let running = false;
 let stopRequested = false;
 
 let urlPrefix = '';
-if (simPort) {
-  const parsedUrl = new URL(window.location.href);
-  urlPrefix = parsedUrl.protocol + '//' + parsedUrl.hostname + ':' + simPort;
-}
 
 function appendLogMsg(msg, color) {
   const logList = document.getElementById('log-list');
