@@ -15,10 +15,12 @@
 #include "servo.h"
 #include "led.h"
 
+#ifdef LISP_ENABLED
 // setting up lisp runtime
 #include "lisp.h"
 typedef Lisp<8192, 2048> MySmallLisp;
 MySmallLisp lisp;
+#endif
 
 #define SDEBUG(label, x) \
   {                      \
@@ -549,6 +551,7 @@ void serveGenericPage(String url)
   file.close();
 }
 
+#ifdef LISP_ENABLED
 void lispSetup()
 {
   char buf[4096];
@@ -586,6 +589,7 @@ void handleLisp()
   }
   serveGenericPage("lisp_input.html"); // TODO: fill form with previous code
 }
+#endif // LISP_ENABLED
 
 void executePlan()
 {
@@ -711,14 +715,16 @@ void setup()
   // dynamic pages
   Serial.println("Starting server...");
   // server.on("/", handleLandingPage);
+#ifdef LISP_ENABLED
+  server.on("/lisp_code", handleLisp); // execute lisp fragment (for testing)
+#endif // LISP_ENABLED
   server.on("/move", handleMove);      // immediate move
   server.on("/turn", handleTurn);      // immediate turn
   server.on("/stop", handleStop);      // immediate stop (of everything)
   server.on("/plan", handlePlan);      // run multiple commands (BUCL script)
   server.on("/busy", handleBusy);      // run multiple commands (BUCL script)
-  server.on("/lisp_code", handleLisp); // execute lisp fragment (for testing)
   server.on("/luminosity1", handleLuminosity1); // get luminosity
-   server.on("/luminosity2", handleLuminosity2); // get luminosity
+  server.on("/luminosity2", handleLuminosity2); // get luminosity
   server.on("/distance", handleDistance); // get distance
   server.on("/accel-x", handleAccel_x); // accelerometer x axis
   server.on("/accel-y", handleAccel_y); // accelerometer y axis
@@ -731,9 +737,11 @@ void setup()
   server.onNotFound(handleNotFound);
   server.begin();
 
+#ifdef LISP_ENABLED
   // initialize lisp
   Serial.println("Configuring lisp...");
   lispSetup();
+#endif
 
   // set up the motor step timer
   Serial.println("Starting motors...");
