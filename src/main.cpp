@@ -15,6 +15,13 @@
 #include "servo.h"
 #include "led.h"
 
+// Display includes and defs
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
 #ifdef LISP_ENABLED
 // setting up lisp runtime
 #include "lisp.h"
@@ -750,6 +757,21 @@ void setup()
   // see what's on the filesystem (and add it to the server)
   addAllFiles();
 
+  //------------------------------------------
+  // Do display stuff
+
+	// initialize with the I2C addr 0x3C
+	display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  
+ 	display.clearDisplay();
+ 	display.setTextSize(2);
+	display.setTextColor(WHITE);
+	display.setCursor(0,0);
+	display.println("Tinkering");
+	display.setCursor(0,26);
+	display.println("Boxbot");
+	display.display();
+  //
+  //------------------------------------------
 }
 
 void loop()
