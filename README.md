@@ -16,7 +16,7 @@ and include a link to https://tinkeringschool.com
 
 https://creativecommons.org/licenses/by/4.0/
 
-
+NOTE: if you get this installed and running, you should have a new Wifi showing up that is the access point on the boxbot. If you connect to that, then go to http://192.168.4.1/blox.html
 ----------
 ESP32 pinout (for our current board)
 ![ESP32 Pinout](https://www.electronicshub.org/wp-content/uploads/2021/02/ESP32-Pinout-1.jpg)
