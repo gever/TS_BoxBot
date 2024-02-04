@@ -68,25 +68,11 @@ Blockly.Blocks['boxbot_wait'] = {
   }
 };
 
-Blockly.Blocks['boxbot_init_servo'] = {
-  init: function() {
-    this.appendValueInput("PIN")
-        .setCheck("Number")
-        .appendField("initialize servo on pin");
-    this.setInputsInline(true);
-    this.setPreviousStatement(true, null);
-    this.setNextStatement(true, null);
-    this.setColour("#e07700");
-    this.setTooltip("");
-    this.setHelpUrl("");
-  }
-};
-
 Blockly.Blocks['boxbot_set_servo_angle'] = {
   init: function() {
-    this.appendValueInput("PIN")
+    this.appendValueInput("SERVO_ID")
         .setCheck("Number")
-        .appendField("set angle of servo on pin");
+        .appendField("set angle of servo");
     this.appendValueInput("ANGLE")
         .setCheck("Number")
         .appendField("to");
@@ -334,32 +320,19 @@ Blockly.JavaScript['boxbot_wait'] = function(block) {
   return code;
 };
 
-async function bbInitServo(pin) {
-  if (!Number.isInteger(pin) || (pin < 0)) {
-    return;
-  }
-  logCommandMsg('init servo pin ' + pin);
-  await bbFetchWait("/servoInit?pin=" + pin);
-}
-Blockly.JavaScript['boxbot_init_servo'] = function(block) {
-  const pinCode = Blockly.JavaScript.valueToCode(block, 'PIN', Blockly.JavaScript.ORDER_ATOMIC);
-  const code = `await bbInitServo(${pinCode});\n`;
-  return code;
-};
-
-async function bbSetServoAngle(pin, angle) {
-  if (!Number.isInteger(pin) || (pin < 0)) {
+async function bbSetServoAngle(servo_id, angle) {
+  if (!Number.isInteger(servo_id) || (servo_id < 0)) {
     return;
   }
   // TODO: generalize the servo initialization to allow for different min/max angles
   const adjAngle = Math.round(angle * 2); // = Math.min(90, Math.max(-90, Math.round(angle)));
-  logCommandMsg('set servo pin ' + pin + ' angle ' + adjAngle);
-  await bbFetchWait("/servoGo?pin=" + pin + "&angle=" + adjAngle);
+  logCommandMsg('set servo ID ' + servo_id + ' angle ' + adjAngle);
+  await bbFetchWait("/servoGo?pin=" + servo_id + "&angle=" + adjAngle);
 }
 Blockly.JavaScript['boxbot_set_servo_angle'] = function(block) {
-  const pinCode = Blockly.JavaScript.valueToCode(block, 'PIN', Blockly.JavaScript.ORDER_ATOMIC);
+  const servo_id = Blockly.JavaScript.valueToCode(block, 'SERVO_ID', Blockly.JavaScript.ORDER_ATOMIC);
   const angleCode = Blockly.JavaScript.valueToCode(block, 'ANGLE', Blockly.JavaScript.ORDER_ATOMIC);
-  const code = `await bbSetServoAngle(${pinCode}, ${angleCode});\n`;
+  const code = `await bbSetServoAngle(${servo_id}, ${angleCode});\n`;
   return code;
 };
 

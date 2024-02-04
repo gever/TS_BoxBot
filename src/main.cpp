@@ -418,7 +418,7 @@ void handleServoInit()
   if (server.args())
   {
     int servoPin = server.arg(0).toInt(); // pin
-    servoInit(servoPin);
+    
   }
   server.send(200, "application/json", "{\"status\":\"ACK\"}");
 }
@@ -744,11 +744,6 @@ void setup()
   server.onNotFound(handleNotFound);
   server.begin();
 
-#ifdef LISP_ENABLED
-  // initialize lisp
-  Serial.println("Configuring lisp...");
-  lispSetup();
-#endif
 
   // set up the motor step timer
   Serial.println("Starting motors...");
@@ -757,9 +752,11 @@ void setup()
   // see what's on the filesystem (and add it to the server)
   addAllFiles();
 
+  // initialize the servos
+  servoInit();
+
   //------------------------------------------
   // Do display stuff
-
 	// initialize with the I2C addr 0x3C
 	display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  
  	display.clearDisplay();
@@ -770,8 +767,9 @@ void setup()
 	display.setCursor(0,26);
 	display.println("Boxbot");
 	display.display();
-  //
-  //------------------------------------------
+
+  // setup complete
+  Serial.println("Setup complete.");
 }
 
 void loop()

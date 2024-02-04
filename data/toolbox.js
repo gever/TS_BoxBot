@@ -154,99 +154,13 @@ const toolbox = {
         },
         {
           'kind': 'block',
-          'type': 'boxbot_init_servo',
-          'inputs': {
-            'PIN': {
-              'shadow': {
-                'type': 'math_number',
-                'fields': {
-                  'NUM': 12,
-                },
-              },
-            },
-          },
-        },
-        {
-          'kind': 'block',
           'type': 'boxbot_set_servo_angle',
           'inputs': {
-            'PIN': {
+            'SERVO_ID': {
               'shadow': {
                 'type': 'math_number',
                 'fields': {
-                  'NUM': 12,
-                },
-              },
-            },
-            'ANGLE': {
-              'shadow': {
-                'type': 'math_number',
-                'fields': {
-                  'NUM': 45,
-                },
-              },
-            },
-          },
-        },
-        {
-          'kind': 'block',
-          'type': 'boxbot_init_servo',
-          'inputs': {
-            'PIN': {
-              'shadow': {
-                'type': 'math_number',
-                'fields': {
-                  'NUM': 25,
-                },
-              },
-            },
-          },
-        },
-        {
-          'kind': 'block',
-          'type': 'boxbot_set_servo_angle',
-          'inputs': {
-            'PIN': {
-              'shadow': {
-                'type': 'math_number',
-                'fields': {
-                  'NUM': 25,
-                },
-              },
-            },
-            'ANGLE': {
-              'shadow': {
-                'type': 'math_number',
-                'fields': {
-                  'NUM': 45,
-                },
-              },
-            },
-          },
-        },
-        {
-          'kind': 'block',
-          'type': 'boxbot_init_servo',
-          'inputs': {
-            'PIN': {
-              'shadow': {
-                'type': 'math_number',
-                'fields': {
-                  'NUM': 32,
-                },
-              },
-            },
-          },
-        },
-        {
-          'kind': 'block',
-          'type': 'boxbot_set_servo_angle',
-          'inputs': {
-            'PIN': {
-              'shadow': {
-                'type': 'math_number',
-                'fields': {
-                  'NUM': 32,
+                  'NUM': 1,
                 },
               },
             },
