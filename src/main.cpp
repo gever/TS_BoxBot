@@ -22,13 +22,6 @@
 #define SCREEN_HEIGHT 64
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
-#ifdef LISP_ENABLED
-// setting up lisp runtime
-#include "lisp.h"
-typedef Lisp<8192, 2048> MySmallLisp;
-MySmallLisp lisp;
-#endif
-
 #define SDEBUG(label, x) \
   {                      \
     Serial.print(label); \
@@ -558,46 +551,6 @@ void serveGenericPage(String url)
   file.close();
 }
 
-#ifdef LISP_ENABLED
-void lispSetup()
-{
-  char buf[4096];
-  File f = SPIFFS.open("/init.lisp", "r");
-  if (!f)
-  {
-    Serial.println("ERR: Failed to open init.lisp");
-    return;
-  }
-  f.readBytes(buf, sizeof(buf));
-  f.close();
-  lisp.input_from_buffer(buf);
-}
-
-void evalCode(const char *code)
-{
-  lisp.unwind();
-  lisp.input_from_buffer(code);
-  lisp.eval(*lisp.push(lisp.read()), lisp.env);
-  // lisp.print(lisp.eval(*lisp.push(lisp.read()), lisp.env));
-}
-
-void handleLisp()
-{
-  // TODO: do this more like handlePlan() above
-  if (server.args())
-  {
-    const String label = "code";
-    if (server.hasArg(label))
-    {
-      // TODO: configure the lisp input to come from the form field
-      String script = server.arg(label);
-      evalCode(script.c_str());
-    }
-  }
-  serveGenericPage("lisp_input.html"); // TODO: fill form with previous code
-}
-#endif // LISP_ENABLED
-
 void executePlan()
 {
   // only parse/setup next statement in the plan if we have finished the previous step
@@ -658,6 +611,7 @@ void addAllFiles()
 
 void setup()
 {
+  String ip_addr_str = "<not set>";
   bool spiffs_ok = false;
 
   Serial.begin(115200);
@@ -704,6 +658,7 @@ void setup()
     else
       Serial.println(" --> connected.");
   }
+
   if (!use_wifi || (WiFi.status() != WL_CONNECTED)){
     Serial.println("Configuring access point...");
     WiFi.softAP(ssid);
@@ -711,9 +666,11 @@ void setup()
     // WiFi.softAPsetHostname(hostname);
     Serial.print("AP IP address: ");
     Serial.println(myIP);
+    ip_addr_str = myIP.toString();
   } else {
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
+    ip_addr_str = WiFi.localIP().toString();
   }
   // mdns_init();
   // mdns_hostname_set(ssid);
@@ -722,9 +679,6 @@ void setup()
   // dynamic pages
   Serial.println("Starting server...");
   // server.on("/", handleLandingPage);
-#ifdef LISP_ENABLED
-  server.on("/lisp_code", handleLisp); // execute lisp fragment (for testing)
-#endif // LISP_ENABLED
   server.on("/move", handleMove);      // immediate move
   server.on("/turn", handleTurn);      // immediate turn
   server.on("/stop", handleStop);      // immediate stop (of everything)
@@ -760,12 +714,12 @@ void setup()
 	// initialize with the I2C addr 0x3C
 	display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  
  	display.clearDisplay();
- 	display.setTextSize(2);
+ 	display.setTextSize(1);
 	display.setTextColor(WHITE);
 	display.setCursor(0,0);
-	display.println("Tinkering");
+	display.println(ssid);
 	display.setCursor(0,26);
-	display.println("Boxbot");
+	display.println(ip_addr_str);
 	display.display();
 
   // setup complete
