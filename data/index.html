@@ -1,19 +1,41 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!DOCTYPE html>
 <html>
 
 <head>
-  <meta charset="UTF-8">
-  <title>blox</title>
-  <link rel="stylesheet" href="style.css">
-  </link>
+  <title>BOXBOT</title>
+  <style>
+    .centered-svg {
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      width: 90%;
+      /* Adjust width as needed */
+    }
+  </style>
 </head>
 
 <body>
-  <!-- link to blox.html -->
-  <h2>BoxBot v0.6</h2>
-  Here are a few of the things you can do here:
-  <div><a href="blox.html">block programming</a></div>
-  <div><a href="drive.html">keyboard drive mode</a></div>
-  <div><a href="settings.html">change settings</a>&nbsp;(careful, not fully operational)</div>
+  <div class="centered-svg">
+    <object data="boxbot-index-panel.svg" type="image/svg+xml" class="centered-svg">
+      <img src="fallback.png" alt="SVG image">
+    </object>
+  </div>
+  <script>
+    function launch(dest) {
+      if (dest == "program") {
+        window.location.href = "blox.html";
+      }
+      if (dest == "plan") {
+        window.location.href = "plan.html";
+      }
+      if (dest == "settings") {
+        window.location.href = "settings.html";
+      }
+      if (dest == "drive") {
+        window.location.href = "drive.html";
+      }
+    }
+  </script>
 </body>
+
 </html>
