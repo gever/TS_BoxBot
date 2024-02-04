@@ -331,10 +331,10 @@ void handleStop()
 
 void handleBusy() {
   if (step_count > 0) {
-    Serial.println("handleBusy: busy");
+    // Serial.println("handleBusy: busy");
     server.send(200, "application/json", "{\"busy\":true}");
   } else {
-    Serial.println("handleBusy: not busy");
+    // Serial.println("handleBusy: not busy");
     server.send(200, "application/json", "{\"busy\":false}");
   }
 }
@@ -587,7 +587,7 @@ void handlePageRequest()
 {
   String url = server.uri();
   if (url == "/")
-    url = "/blox.html";
+    url = "/index.html";
   serveGenericPage(url);
 }
 
@@ -604,10 +604,21 @@ void addAllFiles()
   }
 }
 
+// display current status or boot progress
+void status_update(const char *msg, bool newline = true)
+{
+  // TODO: scroll the display if too many messages come out
+  if (newline) {
+    Serial.println(msg);
+    display.println(msg);
+  } else {
+    Serial.print(msg);
+    display.print(msg);
+  }
+  display.display();
+}
 // Replace with your network credentials
 #include "network_credentials.h"
-// const char* network_ssid = "YOUR SSID";
-// const char* network_password = "YOUR PASSWORD";
 
 void setup()
 {
@@ -615,26 +626,32 @@ void setup()
   bool spiffs_ok = false;
 
   Serial.begin(115200);
-  Serial.println("starting boxbot!!");
-
-  setupAccel();
-
   while (!Serial)
   {
     delay(10);
   } // wait for serial port to connect. Needed for native USB port only
+  Serial.println("starting boxbot!!");
+
+  //------------------------------------------
+  // Do display stuff
+	// initialize with the I2C addr 0x3C
+	display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  
+ 	display.clearDisplay();
+ 	display.setTextSize(1);
+	display.setTextColor(WHITE);
+	status_update("boxbot - start");
 
   // rtc.setTime(30,15,23,2,3,2023); // setup the time (this is for the sensors)
+  // Serial.println("\n\nBoxbot v0.6 --------");
 
-  Serial.println("\n\nBoxbot v0.2 --------");
   if (!SPIFFS.begin(true))
   {
-    Serial.println("ERR: SPIFFS Mount Failed");
+    status_update("ERR: SPIFFS Mount Failed");
     spiffs_ok = false;
   }
   else
   {
-    Serial.println("SPIFFS Mount OK");
+    status_update("SPIFFS Mount OK");
     spiffs_ok = true;
   }
 
@@ -642,42 +659,44 @@ void setup()
   if (use_wifi) {
     WiFi.mode(WIFI_STA);
     WiFi.begin(network_ssid, network_password);
-    Serial.print("Connecting to ");
-    Serial.print(network_ssid);
-    Serial.print(" ");
+    status_update("Network: ");
+    status_update(network_ssid, false);
     for(int i=0; i<20; i++)
     {
       if (WiFi.status() == WL_CONNECTED) {
         break;
       }
       delay(500);
-      Serial.print(".");
+      status_update(".", false);
     }
     if (WiFi.status() != WL_CONNECTED)
-      Serial.println(" --> failed.");
+      status_update(" --> failed.");
     else
-      Serial.println(" --> connected.");
+      status_update(" --> connected.");
   }
 
+  // if we're not connected to wifi, start an access point
   if (!use_wifi || (WiFi.status() != WL_CONNECTED)){
-    Serial.println("Configuring access point...");
+    status_update("AP mode:", false);
     WiFi.softAP(ssid);
     IPAddress myIP = WiFi.softAPIP();
     // WiFi.softAPsetHostname(hostname);
-    Serial.print("AP IP address: ");
-    Serial.println(myIP);
+    // Serial.print("AP IP address: ");
+    // Serial.println(myIP);
     ip_addr_str = myIP.toString();
   } else {
-    Serial.print("IP address: ");
-    Serial.println(WiFi.localIP());
+    status_update("Network mode: ", false);
+    // Serial.print("IP address: ");
+    // Serial.println(WiFi.localIP());
     ip_addr_str = WiFi.localIP().toString();
   }
+  status_update(ip_addr_str.c_str());
+
   // mdns_init();
   // mdns_hostname_set(ssid);
 
-  Serial.println("Configuring server...");
   // dynamic pages
-  Serial.println("Starting server...");
+  status_update("Starting server...");
   // server.on("/", handleLandingPage);
   server.on("/move", handleMove);      // immediate move
   server.on("/turn", handleTurn);      // immediate turn
@@ -695,35 +714,24 @@ void setup()
   server.on("/led", handleLED); // led 
   // server.on("/settings", handleSetup);
   server.on("/save", handleSave);
-  server.onNotFound(handleNotFound);
+  server.onNotFound(handleNotFound); // generic page handler
   server.begin();
 
 
   // set up the motor step timer
-  Serial.println("Starting motors...");
+  status_update("Starting motors...");
   setup_timer();
 
   // see what's on the filesystem (and add it to the server)
+  status_update("Adding files...");
   addAllFiles();
 
   // initialize the servos
+  status_update("Initializing servos...");
   servoInit();
 
-  //------------------------------------------
-  // Do display stuff
-	// initialize with the I2C addr 0x3C
-	display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  
- 	display.clearDisplay();
- 	display.setTextSize(1);
-	display.setTextColor(WHITE);
-	display.setCursor(0,0);
-	display.println(ssid);
-	display.setCursor(0,26);
-	display.println(ip_addr_str);
-	display.display();
-
   // setup complete
-  Serial.println("Setup complete.");
+  status_update("boxbot ready");
 }
 
 void loop()
