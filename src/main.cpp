@@ -21,6 +21,9 @@
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+void activity_update(const char *msg);
+void activity_update(const char *msg1, const char *msg2);
+void activity_update(const char *msg1, const char *msg2, const char *msg3);
 
 #define SDEBUG(label, x) \
   {                      \
@@ -195,7 +198,6 @@ void setup_stop(){
    dir  - fwd=1, bwd=0
    dist - in centimeters
 */
-
 void setup_move(bool dir, int dist)
 {
   // SDEBUG("setup_move\ndir = ", dir);
@@ -303,6 +305,11 @@ void handleMove()
   {
     int v = server.arg(0).toInt(); // negative for backwards movement
     setup_move(v < 0 ? BWD : FWD, ABS(v));
+    if (v < 0) {
+      activity_update("BWD", String(-v).c_str());
+    } else {
+      activity_update("FWD", String(v).c_str());
+    }
   }
   server.send(200, "application/json", "{\"status\":\"ACK\"}");
 }
@@ -315,7 +322,12 @@ void handleTurn()
   {
     int v = server.arg(0).toInt();
     setup_turn(v < 0 ? 1 : 0, ABS(v)); // negative for left turns
-    Serial.println("handleTurn: " + String(v));
+    // Serial.println("handleTurn: " + String(v));
+    if (v < 0) {
+      activity_update("LFT", String(-v).c_str());
+    } else {
+      activity_update("RGT", String(v).c_str());
+    }
   }
   server.send(200, "application/json", "{\"status\":\"ACK\"}");
 }
@@ -326,6 +338,7 @@ void handleStop()
   m2.disable();
   step_count = 0;
   plan_ready = false;
+  activity_update("STOP");
   server.send(200, "application/json", "{\"status\":\"ACK\"}");
 }
 
@@ -349,6 +362,7 @@ void handleLuminosity1()
   char jsonBuffer[JSON_BUFFER_SIZE];
   int v = getLuminosity1();
   snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"luminosity1\":%d}", v);
+  activity_update("LUM1", String(v).c_str());
   server.send(200, "application/json", jsonBuffer);
 }
 
@@ -357,6 +371,7 @@ void handleLuminosity2()
   char jsonBuffer[JSON_BUFFER_SIZE];
   int v = getLuminosity2();
   snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"luminosity2\":%d}", v);
+  activity_update("LUM2", String(v).c_str());
   server.send(200, "application/json", jsonBuffer);
 }
 
@@ -367,6 +382,7 @@ void handleDistance()
   int v = getDistance();
   Serial.print(v);
   snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"distance\":%d}", v);
+  activity_update("DIST", String(v).c_str());
   server.send(200, "application/json", jsonBuffer);
 }
 
@@ -375,6 +391,7 @@ void handleAccel_x()
   char jsonBuffer[JSON_BUFFER_SIZE];
   float v = getAccel_x();
   snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"accel x\":%f}", v);
+  activity_update("ACCX", String(v).c_str());
   server.send(200, "application/json", jsonBuffer);
 }
 
@@ -383,6 +400,7 @@ void handleAccel_y()
   char jsonBuffer[JSON_BUFFER_SIZE];
   float v = getAccel_y();
   snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"accel y\":%d}", v);
+  activity_update("ACCY", String(v).c_str());
   server.send(200, "application/json", jsonBuffer);
 }
 
@@ -391,6 +409,7 @@ void handleAccel_z()
   char jsonBuffer[JSON_BUFFER_SIZE];
   float v = getAccel_z();
   snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"accel z\":%d}", v);
+  activity_update("ACCZ", String(v).c_str());
   server.send(200, "application/json", jsonBuffer);
 }
 
@@ -399,13 +418,28 @@ void handleServoGo()
 {
   if (server.args())
   {
-    int servoPin = server.arg(0).toInt(); // pin
+    int servoID = server.arg(0).toInt(); // pin
     int servoAngle = server.arg(1).toInt(); // angle
-    servoGo(servoPin, servoAngle);
+    servoGo(servoID, servoAngle);
+    switch(servoID) {
+      case 1:
+        activity_update("SERVO1", String(servoAngle).c_str());
+        break;
+      case 2:
+        activity_update("SERVO2", String(servoAngle).c_str());
+        break;
+      case 3:
+        activity_update("SERVO3", String(servoAngle).c_str());
+        break;
+      case 4:
+        activity_update("SERVO4", String(servoAngle).c_str());
+        break;
+    }
   }
   server.send(200, "application/json", "{\"status\":\"ACK\"}");
 }
 
+// TODO: deprecate
 void handleServoInit()
 {
   if (server.args())
@@ -423,25 +457,26 @@ void handleLED()
     int pin = server.arg(0).toInt(); // pin
     bool status = server.arg(1).toInt(); // status
     ledGo(pin, status);
+    activity_update("LED", String(pin).c_str(), String(status).c_str());
   }
   server.send(200, "application/json", "{\"status\":\"ACK\"}"); 
 }
-
-
-
 
 void handleDetectLine()
 {
   char jsonBuffer[JSON_BUFFER_SIZE];
   bool v = detectLine(4095);  // 4095 is for a dark black line on white background
   snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"line?\":%s}", v);
+  activity_update("LINE", v ? "true" : "false");
   server.send(200, "application/json", jsonBuffer);
 }
+
 void handleTemperature()
 {
   char jsonBuffer[JSON_BUFFER_SIZE];
   int v = getTemperature();
   snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"temperature\":%d}", v);
+  activity_update("TEMP", String(v).c_str());
   server.send(200, "application/json", jsonBuffer);
 }
 
@@ -469,6 +504,7 @@ void handleSave()
     {
       linear_turn_fudge = server.arg(label).toFloat();
     }
+    activity_update("SAVE", "settings");
   }
   // TODO: handleLandingPage();
 }
@@ -507,6 +543,7 @@ void handlePlan()
     plan = plan_buffer;               // point it back at the front of the buffer
     plan_token = strtok(plan, delim); // get the first token
     plan_ready = true;
+    activity_update("PLAN", "loaded");
   }
 }
 
@@ -602,24 +639,71 @@ void addAllFiles()
     server.on("/" + String(file.name()), handlePageRequest);
     file = root.openNextFile();
   }
+  // tack on the default page here
+  server.on("/", handlePageRequest);
 }
 
 // display current status or boot progress
-void status_update(const char *msg, bool newline = true)
-{
-  // TODO: scroll the display if too many messages come out
-  if (newline) {
-    Serial.println(msg);
-    display.println(msg);
+#define TEXT_LINES 6
+#define TEXT_LINE_LEN 32
+#define TEXT_DISPLAY_TOP 16   // where the text display starts (empirically determined)
+// bold yellow messages
+bool first_activity = true;
+void activity_update(const char *msg) {
+  Serial.println(msg);
+  if (first_activity) {
+    first_activity = false;
+    display.clearDisplay();
   } else {
-    Serial.print(msg);
-    display.print(msg);
+    display.fillRect(0, 0, 128, TEXT_DISPLAY_TOP, BLACK);
+  }
+  display.setTextSize(2);
+  display.setCursor(0, 0);
+  display.println(msg);
+  display.setTextSize(1);
+  display.display();
+}
+void activity_update(const char *msg1, const char *msg2) {
+  char buf[TEXT_LINE_LEN];
+  snprintf(buf, TEXT_LINE_LEN, "%s %s", msg1, msg2);
+  activity_update(buf);
+}
+void activity_update(const char *msg1, const char *msg2, const char *msg3) {
+  char buf[TEXT_LINE_LEN];
+  snprintf(buf, TEXT_LINE_LEN, "%s %s %s", msg1, msg2, msg3);
+  activity_update(buf);
+}
+
+// regular status messages
+char status_buffer[TEXT_LINES][TEXT_LINE_LEN];
+void status_init() {
+  memset(status_buffer, 0, sizeof(status_buffer));
+}
+void status_update(const char *msg)
+{
+  Serial.println(msg);
+  // scroll up, write new message at bottom of screen
+  memcpy(status_buffer[0], status_buffer[1], TEXT_LINE_LEN * (TEXT_LINES - 1));
+  strncpy(&status_buffer[TEXT_LINES - 1][0], msg, TEXT_LINE_LEN - 1);
+
+  // redraw the blue section of the display
+  display.fillRect(0, TEXT_DISPLAY_TOP, 128, 64 - TEXT_DISPLAY_TOP, BLACK);
+  display.setCursor(0, TEXT_DISPLAY_TOP);
+  for (int i = 0; i < TEXT_LINES; i++) {
+    display.println(status_buffer[i]);
   }
   display.display();
 }
+void status_update(const char *msg1, const char *msg2)
+{
+  char buf[TEXT_LINE_LEN];
+  snprintf(buf, TEXT_LINE_LEN, "%s %s", msg1, msg2);
+  status_update(buf);
+}
+
 // Replace with your network credentials
 #include "network_credentials.h"
-
+bool network_ap_mode = true;
 void setup()
 {
   String ip_addr_str = "<not set>";
@@ -630,11 +714,12 @@ void setup()
   {
     delay(10);
   } // wait for serial port to connect. Needed for native USB port only
-  Serial.println("starting boxbot!!");
+  Serial.println("starting boxbot");
+  status_init();
 
   //------------------------------------------
-  // Do display stuff
-	// initialize with the I2C addr 0x3C
+  // Setup OLED early so that status messages can be displayed
+	// currently: initialized with the I2C addr 0x3C
 	display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  
  	display.clearDisplay();
  	display.setTextSize(1);
@@ -646,12 +731,12 @@ void setup()
 
   if (!SPIFFS.begin(true))
   {
-    status_update("ERR: SPIFFS Mount Failed");
+    status_update("ERR: SPIFFS mount failed");
     spiffs_ok = false;
   }
   else
   {
-    status_update("SPIFFS Mount OK");
+    status_update("SPIFFS mounted");
     spiffs_ok = true;
   }
 
@@ -659,44 +744,42 @@ void setup()
   if (use_wifi) {
     WiFi.mode(WIFI_STA);
     WiFi.begin(network_ssid, network_password);
-    status_update("Network: ");
-    status_update(network_ssid, false);
-    for(int i=0; i<20; i++)
-    {
+    status_update("Connecting to Network: ", network_ssid);
+    for(int i=0; i<20; i++) { // wait up to 10 seconds for wifi to connect
       if (WiFi.status() == WL_CONNECTED) {
         break;
       }
       delay(500);
-      status_update(".", false);
     }
-    if (WiFi.status() != WL_CONNECTED)
+    if (WiFi.status() == WL_CONNECTED) {
+      status_update(" --> yay!");
+      network_ap_mode = false;
+    } else {
       status_update(" --> failed.");
-    else
-      status_update(" --> connected.");
+    }
   }
 
   // if we're not connected to wifi, start an access point
-  if (!use_wifi || (WiFi.status() != WL_CONNECTED)){
-    status_update("AP mode:", false);
+  if (!use_wifi || (WiFi.status() != WL_CONNECTED)) {
+    status_update("Starting wifi", ssid);
     WiFi.softAP(ssid);
     IPAddress myIP = WiFi.softAPIP();
     // WiFi.softAPsetHostname(hostname);
     // Serial.print("AP IP address: ");
     // Serial.println(myIP);
     ip_addr_str = myIP.toString();
+    network_ap_mode = true;
   } else {
-    status_update("Network mode: ", false);
     // Serial.print("IP address: ");
     // Serial.println(WiFi.localIP());
     ip_addr_str = WiFi.localIP().toString();
   }
-  status_update(ip_addr_str.c_str());
 
   // mdns_init();
   // mdns_hostname_set(ssid);
 
   // dynamic pages
-  status_update("Starting server...");
+  status_update("Starting server");
   // server.on("/", handleLandingPage);
   server.on("/move", handleMove);      // immediate move
   server.on("/turn", handleTurn);      // immediate turn
@@ -719,16 +802,26 @@ void setup()
 
 
   // set up the motor step timer
-  status_update("Starting motors...");
+  status_update("Initialize motors");
   setup_timer();
 
   // see what's on the filesystem (and add it to the server)
-  status_update("Adding files...");
+  status_update("Initialize files");
   addAllFiles();
 
   // initialize the servos
-  status_update("Initializing servos...");
+  status_update("Initialize servos");
   servoInit();
+
+  // share network info as last thing on the display
+  if (network_ap_mode) {
+    status_update("AP mode");
+    status_update(ssid);
+    status_update(ip_addr_str.c_str());
+  } else {
+    status_update("Connected to", network_ssid);
+    status_update(ip_addr_str.c_str());
+  }
 
   // setup complete
   status_update("boxbot ready");
