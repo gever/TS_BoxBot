@@ -21,9 +21,16 @@
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+// activity messages go to the top line of the display
 void activity_update(const char *msg);
 void activity_update(const char *msg1, const char *msg2);
 void activity_update(const char *msg1, const char *msg2, const char *msg3);
+
+// status messages scroll in the blue section of the display
+void status_update(const char *msg);
+void status_update(const char *msg1, const char *msg2);
+void status_update(const char *msg1, const char *msg2, const char *msg3);
 
 #define SDEBUG(label, x) \
   {                      \
@@ -35,16 +42,125 @@ void activity_update(const char *msg1, const char *msg2, const char *msg3);
 WebServer server(80);
 
 // things that can be set through settings UI
-// TODO: store these in flash filesystem
-uint16_t motor_step_rate = 950;
-float linear_turn_fudge = 1.0;
-float linear_motion_fudge = 1.0;
-bool wheels_forward = true;
+// TODO: store these in SPIFFS filesystem
+#define SETTINGS_STR_BUFFER_SIZE 64
+#define RESET_MOTOR_STEP_RATE   950
+#define RESET_LINEAR_TURN_FUDGE 1.0
+#define RESET_LINEAR_MOTION_FUDGE 1.0
+#define RESET_WHEELS_FORWARD    true
+#define RESET_USE_WIFI          false
+#define RESET_AP_SSID           "wacky-squirrel"
+#define RESET_AP_PASSWORD       ""
+#define RESET_NETWORK_SSID      "your_ssid_here"
+#define RESET_NETWORK_PASSWORD  "your_password_here"
+uint16_t motor_step_rate         = RESET_MOTOR_STEP_RATE;
+float linear_turn_fudge          = RESET_LINEAR_TURN_FUDGE;
+float linear_motion_fudge        = RESET_LINEAR_MOTION_FUDGE;
+bool wheels_forward              = RESET_WHEELS_FORWARD;
+bool use_wifi                    = RESET_USE_WIFI;
+char buffer_ap_ssid[SETTINGS_STR_BUFFER_SIZE]          = RESET_AP_SSID;
+char buffer_ap_password[SETTINGS_STR_BUFFER_SIZE]      = RESET_AP_PASSWORD;
+char buffer_network_ssid[SETTINGS_STR_BUFFER_SIZE]     = RESET_NETWORK_SSID;
+char buffer_network_password[SETTINGS_STR_BUFFER_SIZE] = RESET_NETWORK_PASSWORD;
+// add the variables to the settings table
+enum var_type { INT, FLOAT, BOOL, STRING };
+typedef struct {
+  const char *label;
+  void *target;
+  var_type type;
+} setting_t;
+setting_t settings[] = {
+    {"motor-step-rate", &motor_step_rate, var_type::INT},
+    {"linear-turn-fudge", &linear_turn_fudge, var_type::FLOAT},
+    {"linear-motion-fudge", &linear_motion_fudge, var_type::FLOAT},
+    {"wheels-forward", &wheels_forward, var_type::BOOL},
+    {"use-wifi", &use_wifi, var_type::BOOL},
+    {"ap-ssid", &buffer_ap_ssid, var_type::STRING},
+    {"ap-password", &buffer_ap_password, var_type::STRING},
+    {"network-ssid", &buffer_network_ssid, var_type::STRING},
+    {"network-password", &buffer_network_password, var_type::STRING}
+};
 
-// Set these to your desired credentials.
-bool use_wifi = false;
-const char *ssid = "wacky-squirrel";
-const char *password = (char *)NULL;
+// save the settings to SPIFFS as CSV by label, value
+void save_settings() {
+  File file = SPIFFS.open("/settings.csv", "w");
+  if (!file) {
+    Serial.println("ERR: failed to open settings file for writing");
+    return;
+  }
+  for (int i = 0; i < sizeof(settings) / sizeof(setting_t); i++) {
+    switch (settings[i].type) {
+      case INT:
+        file.print(settings[i].label);
+        file.print(",");
+        file.println(*(int *)settings[i].target);
+        break;
+      case FLOAT:
+        file.print(settings[i].label);
+        file.print(",");
+        file.println(*(float *)settings[i].target);
+        break;
+      case BOOL:
+        file.print(settings[i].label);
+        file.print(",");
+        file.println(*(bool *)settings[i].target);
+        break;
+      case STRING:
+        file.print(settings[i].label);
+        file.print(",");
+        // write all 64 bytes of the string buffer
+        // file.write((uint8_t *)settings[i].target, SETTINGS_STR_BUFFER_SIZE);
+        file.println((char *)settings[i].target);
+        break;
+    }
+  }
+  file.close();
+}
+
+// load the settings from SPIFFS as CSV by label, value
+void load_settings() {
+  File file = SPIFFS.open("/settings.csv", "r");
+  if (!file) {
+    Serial.println("ERR: failed to open settings file for reading");
+    status_update("ERR: failed to open settings file for reading");
+    return;
+  }
+  char line[128];   // TODO: check for buffer overflow
+  while (file.available()) {
+    int len = file.readBytesUntil('\n', line, 128);
+    // TODO: fix bug where we still get garbage characters at the end of the STRING values
+    line[len] = 0; // null terminate the string, because readBytesUntil doesn't
+    // ignore lines that start with a comment
+    if (line[0] == '#') {
+      continue;
+    }
+    char *label = strtok(line, ",");
+    char *value = strtok(NULL, "\n");
+    // find the matching label in the settings table
+    for (int i = 0; i < sizeof(settings) / sizeof(setting_t); i++) {
+      if (strcmp(label, settings[i].label) == 0) {
+        switch (settings[i].type) {
+          case INT:
+            *(int *)settings[i].target = atoi(value);
+            break;
+          case FLOAT:
+            *(float *)settings[i].target = atof(value);
+            break;
+          case BOOL:
+            *(bool *)settings[i].target = atoi(value);
+            break;
+          case STRING:
+            memset((char *)settings[i].target, 0, SETTINGS_STR_BUFFER_SIZE);
+            strcpy((char *)settings[i].target, value);
+            break;
+        }
+      }
+    }
+  }
+  file.close();
+  status_update("settings loaded");
+}
+
 
 // primitive motion plan parsing/interpreting
 #define MAX_PLAN_LEN 1024
@@ -480,34 +596,97 @@ void handleTemperature()
   server.send(200, "application/json", jsonBuffer);
 }
 
-void handleSave()
+// render the current settings as lines of text
+String renderSettings() {
+  String text = "";
+  for (int i = 0; i < sizeof(settings) / sizeof(setting_t); i++) {
+    switch (settings[i].type) {
+      case INT:
+        text += settings[i].label;
+        text += " = ";
+        text += String(*(int *)settings[i].target);
+        text += "\n";
+        break;
+      case FLOAT:
+        text += settings[i].label;
+        text += " = ";
+        text += String(*(float *)settings[i].target);
+        text += "\n";
+        break;
+      case BOOL:
+        text += settings[i].label;
+        text += " = ";
+        text += String(*(bool *)settings[i].target);
+        text += "\n";
+        break;
+      case STRING:
+        text += settings[i].label;
+        text += " = ";
+        text += (char *)settings[i].target;
+        text += "\n";
+        break;
+    }
+  }
+  return text;
+}
+
+void handleGetVars() {
+  String html = "<html><head><title>Settings</title></head><body>";
+  // add a text input field for the label
+  html += "<pre>\n";
+  html += renderSettings();
+  html += "</pre>\n";
+  html += "</body></html>";
+  server.send(200, "text/html", html);
+}
+
+void handleSetVar()
 {
   // TODO: save current settings to SPIFFS/flash memory
   // TODO: save load current settings from SPIFFS
   if (server.args())
   {
-    String label;
+    if (server.argName(0) == "label") {
+      String label;
+      String value;
 
-    label = "motor-step-rate";
-    if (server.hasArg(label))
-    {
-      motor_step_rate = server.arg(label).toInt();
-      // TODO: motor_setup( motor_step_rate );
+      label = server.arg(0);
+      value = server.arg(1);
+
+      Serial.println("handleSetVar: " + label + " " + value);
+
+      // find this var in settings table
+      for (int i = 0; i < sizeof(settings) / sizeof(setting_t); i++)
+      {
+        if (label == settings[i].label)
+        {
+          switch (settings[i].type)
+          {
+          case INT:
+            *(int *)settings[i].target = value.toInt();
+            break;
+          case FLOAT:
+            *(float *)settings[i].target = value.toFloat();
+            break;
+          case BOOL:
+            *(bool *)settings[i].target = value.toInt();
+            break;
+          case STRING:
+            memset((char *)settings[i].target, 0, SETTINGS_STR_BUFFER_SIZE);
+            strcpy((char *)settings[i].target, value.c_str());
+            break;
+          }
+          status_update((const char *)"setvar", label.c_str(), value.c_str());
+          break;
+        }
+      }
+    } else {
+      status_update("ERR: no label for setvar");
     }
-    label = "linear-motion-fudge";
-    if (server.hasArg(label))
-    {
-      linear_motion_fudge = server.arg(label).toFloat();
-    }
-    label = "linear-turn-fudge";
-    if (server.hasArg(label))
-    {
-      linear_turn_fudge = server.arg(label).toFloat();
-    }
-    activity_update("SAVE", "settings");
+    save_settings();
   }
-  // TODO: handleLandingPage();
 }
+
 
 // parse a string into a number
 int parse_int(char *str)
@@ -694,6 +873,7 @@ void status_update(const char *msg)
   }
   display.display();
 }
+
 void status_update(const char *msg1, const char *msg2)
 {
   char buf[TEXT_LINE_LEN];
@@ -701,8 +881,13 @@ void status_update(const char *msg1, const char *msg2)
   status_update(buf);
 }
 
-// Replace with your network credentials
-#include "network_credentials.h"
+void status_update(const char *msg1, const char *msg2, const char *msg3)
+{
+  char buf[TEXT_LINE_LEN];
+  snprintf(buf, TEXT_LINE_LEN, "%s %s %s", msg1, msg2, msg3);
+  status_update(buf);
+}
+
 bool network_ap_mode = true;
 void setup()
 {
@@ -740,11 +925,17 @@ void setup()
     spiffs_ok = true;
   }
 
+  // load settings from SPIFFS before starting the network and server
+  if (spiffs_ok)
+  {
+    load_settings();
+  }
+
   // try connecting to the wifi network
   if (use_wifi) {
     WiFi.mode(WIFI_STA);
-    WiFi.begin(network_ssid, network_password);
-    status_update("Connecting to Network: ", network_ssid);
+    WiFi.begin(buffer_network_ssid, buffer_network_password);
+    status_update("Connecting to Network: ", buffer_network_ssid);
     for(int i=0; i<20; i++) { // wait up to 10 seconds for wifi to connect
       if (WiFi.status() == WL_CONNECTED) {
         break;
@@ -761,17 +952,13 @@ void setup()
 
   // if we're not connected to wifi, start an access point
   if (!use_wifi || (WiFi.status() != WL_CONNECTED)) {
-    status_update("Starting wifi", ssid);
-    WiFi.softAP(ssid);
+    status_update("Starting wifi", buffer_ap_ssid);
+    WiFi.softAP(buffer_ap_ssid);
     IPAddress myIP = WiFi.softAPIP();
     // WiFi.softAPsetHostname(hostname);
-    // Serial.print("AP IP address: ");
-    // Serial.println(myIP);
     ip_addr_str = myIP.toString();
     network_ap_mode = true;
   } else {
-    // Serial.print("IP address: ");
-    // Serial.println(WiFi.localIP());
     ip_addr_str = WiFi.localIP().toString();
   }
 
@@ -795,8 +982,8 @@ void setup()
   server.on("/servoGo", handleServoGo); // move servo!
   server.on("/servoInit", handleServoInit); // move servo!
   server.on("/led", handleLED); // led 
-  // server.on("/settings", handleSetup);
-  server.on("/save", handleSave);
+  server.on("/setvar", handleSetVar);
+  server.on("/getvars", handleGetVars);
   server.onNotFound(handleNotFound); // generic page handler
   server.begin();
 
@@ -816,12 +1003,11 @@ void setup()
   // share network info as last thing on the display
   if (network_ap_mode) {
     status_update("AP mode");
-    status_update(ssid);
-    status_update(ip_addr_str.c_str());
+    status_update(buffer_ap_ssid);
   } else {
-    status_update("Connected to", network_ssid);
-    status_update(ip_addr_str.c_str());
+    status_update("Connected to", buffer_network_ssid);
   }
+  status_update(ip_addr_str.c_str());
 
   // setup complete
   status_update("boxbot ready");

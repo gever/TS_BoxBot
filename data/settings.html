@@ -8,55 +8,39 @@
   <link href="style.css" rel="stylesheet" type="text/css" />
 </head>
 
-<body>
-  <div class="rendered-form">
-    <div class="">
-      <h1 access="false" id="control-1770517">Boxbot System Settings</h1>
-    </div>
-    <form action="/save" method="post" class="settings-form">
-      <div class="formbuilder-radio-group form-group">
-        <div class="formbuilder-group-label">Set Orientation</div>
-        <div class="tooltip-element">Determines which direction the boxbot goes when asked to go forward.</div>
-        <div class="radio-group">
-          <div class="formbuilder-radio">
-            <input name="radio-group-1669745857659" access="false" id="radio-group-1669745857659-0"
-              value="wheels-in-front" type="radio" checked="checked">
-            <label for="radio-group-1669745857659-0">Wheels in Front</label>
-          </div>
-          <div class="formbuilder-radio">
-            <input name="radio-group-1669745857659" access="false" id="radio-group-1669745857659-1"
-              value="wheels-in-back" type="radio">
-            <label for="radio-group-1669745857659-1">Wheels in Back</label>
-          </div>
-        </div>
-      </div>
-      <div class="form-group">
-        <div class="formbuilder-group-label">Step Rate</div>
-        <div class="tooltip-element">Sets the delay between motor steps. Less than 950 reduces torque.</div>
-        <input type="number" class="form-control" name="motor-step-rate" access="false" value="950" min="100"
-          max="10000" id="motor-step-rate">
-      </div>
-      <div class="form-group">
-        <div class="formbuilder-group-label">Linear Turn Fudge</div>
-        <div class="tooltip-element">This constant is multiplied by the calculated "idealized" turn result
-          (which is based on a 80mm diameter and zero-slip surface) to correct under/over turnage. More
-          than 1.0 creates more turn, less than 1.0 creates less turn.</div>
-        <input type="text" class="form-control" name="linear-turn-fudge" value="1.0" id="linear-turn-fudge">
-      </div>
-      <div class="form-group">
-        <div class="formbuilder-group-label">Linear Motion Fudge</div>
-        <div class="tooltip-element">This constant is multiplied by the calculated "idealized" movement result
-          (which is based on a 80mm diameter and zero-slip surface) to correct under/over movement. More
-          than 1.0 creates more movement, less than 1.0 creates less movement.</div>
-        <input type="text" class="form-control" name="linear-motion-fudge" value="1.0" id="linear-motion-fudge">
-      </div>
-      <div class="formbuilder-button form-group">
-        <button type="submit" class="btn-success btn" name="save-button" access="false" style="success"
-          id="save-button">Save</button>
-      </div>
-    </form>
+<body style="margin-left:15px;">
+  <div>
+    <h1>Set a variable</h1>
+    <form id="varform" method="post">
+      <label for="setting">Setting:</label>
+      <input type="text" id="label" name="label" required>
+      <label for="value">Value:</label>
+      <input type="text" id="value" name="value" required>
+      <input type="submit" value="Set">
+    </form>  
   </div>
-  <script src="motion_script.js"></script>
+  <div>
+    <h1>Current Settings</h1>
+    <iframe id="varview" src="/getvars" width="100%" height="100%"></iframe>
+  </div>
+  <script>
+    var form = document.getElementById('varform');
+    form.onsubmit = function(e) {
+      e.preventDefault();
+      var label = document.getElementById('label').value;
+      var value = document.getElementById('value').value;
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', '/setvar', true);
+      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+      xhr.send('label=' + label + '&value=' + value);
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+          console.log(xhr.responseText);
+        }
+      }
+      // refresh the varview iframe
+      document.getElementById('varview').src = document.getElementById('varview').src;
+    }
+  </script>
 </body>
-
 </html>
