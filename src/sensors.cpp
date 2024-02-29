@@ -17,8 +17,8 @@ bool statusTemperature = false;
 // allocate pins 
 const int pingPin = 5;  // Trigger Pin of Ultrasonic Sensor
 const int echoPin = 18; // Echo Pin of Ultrasonic Sensor
-const int luminosityPin1 = 34; // io pin for the luminosity sensor 
-const int luminosityPin2 = 39; // io pin for the second luminosity sensor 
+const int luminosityPin1 = 32; // Labeled "Servo 2" on the carrier board 
+const int luminosityPin2 = 33; // Labeled "Servo 4" on the carrier board 
 
 // MPU6050 uses I2C: SDA (21) and SCL (22)
 bool accelerometer = true; 
