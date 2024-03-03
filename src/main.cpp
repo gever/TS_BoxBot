@@ -539,16 +539,16 @@ void handleServoGo()
     servoGo(servoID, servoAngle);
     switch(servoID) {
       case 1:
-        activity_update("SERVO1", String(servoAngle).c_str());
+        activity_update("SRVO1", String(servoAngle).c_str());
         break;
       case 2:
-        activity_update("SERVO2", String(servoAngle).c_str());
+        activity_update("SRVO2", String(servoAngle).c_str());
         break;
       case 3:
-        activity_update("SERVO3", String(servoAngle).c_str());
+        activity_update("SRVO3", String(servoAngle).c_str());
         break;
       case 4:
-        activity_update("SERVO4", String(servoAngle).c_str());
+        activity_update("SRVO4", String(servoAngle).c_str());
         break;
     }
   }

@@ -25,50 +25,28 @@ bool accelerometer = true;
 bool gyroscope = true; 
 bool temperature = false; 
 
-// get luminosity 
-// 10 millisecond averaging loop 
-int getLuminosity1(void) {
-    int values[5];
-    for (int i=0; i < 5; i++){
-        int newValue = analogRead(luminosityPin1);
-        values[i] = newValue; 
-        delay(2); // delay is 2 milliseconds 
-    }
-    int lumValue = 0; 
-    for (int i = 0; i < 5; i++){
-        lumValue = lumValue + values[i]; 
-    }
-    // TODO: normalize the value to a range of 0-100
-    float lumAvg = (lumValue/5); // dividing by 5*10. 5 comes from 5 items averaging, 10 is to round the value 
-    //Serial.print("sensor reading: "); 
-    //Serial.println(lumAvg); 
-    
-    return (lumAvg);
+// LUMINOSITY
+// take an average of N samples
+float sampleLuminosity(int which) {
+  float sum;
+  for (int i=0; i<5; i++) {
+    sum += analogRead(which);
+    delay(2); // time for the analog accumulator to re-settle
+  }
+  return sum/5.0;
 }
-
+int getLuminosity1(void) {
+    return sampleLuminosity(luminosityPin1);
+}
 int getLuminosity2(void) {
-    int values[5];
-    for (int i=0; i < 5; i++){
-        int newValue = analogRead(luminosityPin2);
-        values[i] = newValue; 
-        delay(2); // delay is 2 milliseconds 
-    }
-    int lumValue = 0; 
-    for (int i = 0; i < 5; i++){
-        lumValue = lumValue + values[i]; 
-    }
-    // TODO: normalize the value to a range of 0-100
-    float lumAvg = (lumValue/5); // dividing by 5*10. 5 comes from 5 items averaging, 10 is to round the value 
-    //Serial.print("sensor reading: "); 
-    //Serial.println(lumAvg); 
-    
-    return (lumAvg);
+    return sampleLuminosity(luminosityPin2);
 }
 
 // get distance 
 int getDistance(void){
     //  send pulse
-    long duration, inches, cm;
+    long duration;
+    float cm;
     pinMode(pingPin, OUTPUT);
     digitalWrite(pingPin, LOW);
     delayMicroseconds(2);
@@ -79,13 +57,14 @@ int getDistance(void){
     duration = pulseIn(echoPin, HIGH);
 
     // format value 
-    inches = (duration / 74 / 2);
-    cm = (duration / 29 / 2);
-    Serial.print(inches);
-    Serial.print("in, ");
-    Serial.print(cm);
-    Serial.print("cm");
-    Serial.println();
+    // inches = (duration / 74 / 2);
+    // how long for the ping to go out and come back?
+    cm = (duration / 29.0) / 2.0;
+    // Serial.print(inches);
+    // Serial.print("in, ");
+    // Serial.print(cm);
+    // Serial.print("cm");
+    // Serial.println();
 
     return(cm);
 }
