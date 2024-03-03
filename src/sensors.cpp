@@ -28,7 +28,7 @@ bool temperature = false;
 // LUMINOSITY
 // take an average of N samples
 float sampleLuminosity(int which) {
-  float sum;
+  float sum = 0;
   for (int i=0; i<5; i++) {
     sum += analogRead(which);
     delay(2); // time for the analog accumulator to re-settle
