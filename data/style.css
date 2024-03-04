@@ -99,3 +99,19 @@ body {
 #log-list li:not(:first-child) {
   margin-top: 0.25em;
 }
+
+.panel_button {
+  
+}
+.fwd_style {
+  background-color: rgb(197, 157, 27);
+}
+.bwd_style {
+  background-color: rgb(197, 104, 27);
+}
+.left_style {
+  background-color: rgb(27, 197, 155);
+}
+.right_style {
+  background-color: rgb(27, 157, 197);
+}
