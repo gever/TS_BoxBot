@@ -1,3 +1,6 @@
+#include <ArduinoJson.h>
+#include <FS.h>
+
 // things that can be set through settings UI
 // TODO: store these in SPIFFS filesystem
 #define SETTINGS_STR_BUFFER_SIZE 64
@@ -43,82 +46,75 @@ setting_t settings[] = {
   {"network-password",   .string_target = buffer_network_password, .type = STRING}
 };
 
-// save the settings to SPIFFS as CSV by label, value
+// save the settings to SPIFFS as JSON
 void save_settings() {
-  File file = SPIFFS.open("/settings.csv", "w");
+  File file = SPIFFS.open("/settings.json", "w");
   if (!file) {
     Serial.println("ERR: failed to open settings file for writing");
     return;
   }
+  file.print("{");
   for (int i = 0; i < sizeof(settings) / sizeof(setting_t); i++) {
+    file.print("\"");
+    file.print(settings[i].label);
+    file.print("\":");
     switch (settings[i].type) {
       case INT:
-        file.print(settings[i].label);
-        file.print(",");
-        file.println(*settings[i].int_target);
+        file.print(*settings[i].int_target);
         break;
       case FLOAT:
-        file.print(settings[i].label);
-        file.print(",");
-        file.println(*settings[i].float_target);
+        file.print(*settings[i].float_target);
         break;
       case BOOL:
-        file.print(settings[i].label);
-        file.print(",");
-        file.println(*settings[i].bool_target);
+        file.print(*settings[i].bool_target);
         break;
       case STRING:
-        file.print(settings[i].label);
-        file.print(",");
-        file.println(settings[i].string_target);
+        file.print("\"");
+        file.print(settings[i].string_target);
+        file.print("\"");
         break;
     }
+    if (i < sizeof(settings) / sizeof(setting_t) - 1) {
+      file.print(",");
+    }
   }
+  file.print("}");
   file.close();
 }
 
-// load the settings from SPIFFS as CSV by label, value
+// load the settings from SPIFFS
 void load_settings() {
-  File file = SPIFFS.open("/settings.csv", "r");
+  File file = SPIFFS.open("/settings.json", "r");
   if (!file) {
     Serial.println("ERR: failed to open settings file for reading");
-    status_update("ERR: failed to open settings file for reading");
     return;
   }
-  char line[128];   // TODO: check for buffer overflow
-  while (file.available()) {
-    int len = file.readBytesUntil('\n', line, 128);
-    // TODO: fix bug where we still get garbage characters at the end of the STRING values
-    line[len] = 0; // null terminate the string, because readBytesUntil doesn't
-    // ignore lines that start with a comment
-    if (line[0] == '#') {
-      continue;
-    }
-    char *label = strtok(line, ",");
-    char *value = strtok(NULL, "\n");
-    // find the matching label in the settings table
-    for (int i = 0; i < sizeof(settings) / sizeof(setting_t); i++) {
-      if (strcmp(label, settings[i].label) == 0) {
-        switch (settings[i].type) {
-          case INT:
-            *settings[i].int_target = atoi(value);
-            break;
-          case FLOAT:
-            *settings[i].float_target = atof(value);
-            break;
-          case BOOL:
-            *settings[i].bool_target = atoi(value);
-            break;
-          case STRING:
-            memset(settings[i].string_target, 0, SETTINGS_STR_BUFFER_SIZE);
-            strcpy(settings[i].string_target, value);
-            break;
-        }
+  String json = file.readString();
+  file.close();
+  DynamicJsonDocument doc(1024);
+  DeserializationError error = deserializeJson(doc, json);
+  if (error) {
+    Serial.println("ERR: failed to parse settings JSON");
+    return;
+  }
+  for (int i = 0; i < sizeof(settings) / sizeof(setting_t); i++) {
+    if (doc.containsKey(settings[i].label)) {
+      switch (settings[i].type) {
+        case INT:
+          *settings[i].int_target = doc[settings[i].label];
+          break;
+        case FLOAT:
+          *settings[i].float_target = doc[settings[i].label];
+          break;
+        case BOOL:
+          *settings[i].bool_target = doc[settings[i].label];
+          break;
+        case STRING:
+          strncpy(settings[i].string_target, doc[settings[i].label], SETTINGS_STR_BUFFER_SIZE);
+          break;
       }
     }
   }
-  file.close();
-  status_update("settings loaded");
 }
 
 // render the current settings as lines of text
@@ -147,7 +143,14 @@ String render_settings() {
       case STRING:
         text += settings[i].label;
         text += " = ";
-        text += settings[i].string_target;
+        // if label contains 'password' print asterisks
+        if (strstr(settings[i].label, "password")) {
+          for (int j = 0; j < strlen(settings[i].string_target); j++) {
+            text += "*";
+          }
+        } else {
+          text += settings[i].string_target;
+        }
         text += "\n";
         break;
     }

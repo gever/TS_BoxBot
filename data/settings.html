@@ -13,7 +13,17 @@
     <h1>Set a variable</h1>
     <form id="varform" method="post">
       <label for="setting">Setting:</label>
-      <input type="text" id="label" name="label" required>
+      <select id="label" name="label">
+        <option value="motor-step-rate">motor-step-rate</option>
+        <option value="linear-turn-fudge">linear-turn-fudge</option>
+        <option value="linear-motion-fudge">linear-motion-fudge</option>
+        <option value="wheels-forward">wheels-forward</option>
+        <option value="use-wifi">use-wifi</option>
+        <option value="ap-ssid">ap-ssid</option>
+        <option value="ap-password">ap-password</option>
+        <option value="network-ssid">network-ssid</option>
+        <option value="network-password">network-password</option>
+      </select>
       <label for="value">Value:</label>
       <input type="text" id="value" name="value" required>
       <input type="submit" value="Set">

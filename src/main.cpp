@@ -781,7 +781,8 @@ void setup()
     load_settings();
   }
 
-  if (true) {
+  // inventory the available wifi networks
+  if (false) {
     int n = WiFi.scanNetworks();
     for (int i = 0; i < n; ++i) {
       Serial.print(WiFi.SSID(i).length());
@@ -813,7 +814,6 @@ void setup()
       status_update(" --> yay!");
       network_ap_mode = false;
     } else {
-      status_update(" --> failed.");
       network_ap_mode = true;
       switch(WiFi.status()) {
         case WL_NO_SSID_AVAIL:

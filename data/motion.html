@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>VSA Rover Control</title>
+    <link href="style.css" rel="stylesheet" type="text/css" />
+  </head>
+  <body style="width:100%; background-color:black;">
+    <table style="width:100%">
+    <tr>
+      <td class="command_container">
+        <table width="100%;">
+          <!-- first row -->
+          <tr>
+            <td id="MOV_FWD_1" class="panel_button fwd_style">
+              <div class="button_contents">Forward 1</div>
+            </td>
+            <td id="MOV_BWD_1" class="panel_button bwd_style">
+               <div class="button_contents">Backward 1</div>
+            </td>
+            <td id="TRN_LT_15" class="panel_button left_style">
+               <div class="button_contents">Left 15</div>
+            </td>
+            <td id="TRN_RT_15" class="panel_button right_style">
+               <div class="button_contents">Right 15</div>
+            </td>
+          </tr>
+
+          <!-- second row -->
+          <tr>
+            <td id="MOV_FWD_5" class="panel_button fwd_style">
+               <div class="button_contents">Forward 5</div>
+            </td>
+            <td id="MOV_BWD_5" class="panel_button bwd_style">
+               <div class="button_contents">Backward 5</div>
+            </td>
+            <td id="TRN_LT_30" class="panel_button left_style">
+               <div class="button_contents">Left 30</div>
+            </td>
+            <td id="TRN_RT_30" class="panel_button right_style">
+               <div class="button_contents">Right 30</div>
+            </td>
+          </tr>
+
+          <!-- third row -->
+          <tr>
+            <td id="MOV_FWD_10" class="panel_button fwd_style">
+               <div class="button_contents">Forward 10</div>
+            </td>
+            <td id="MOV_BWD_10" class="panel_button bwd_style">
+               <div class="button_contents">Backward 10</div>
+            </td>
+            <td id="TRN_LT_90" class="panel_button left_style">
+               <div class="button_contents">Left 90</div>
+            </td>
+            <td id="TRN_RT_90" class="panel_button right_style">
+               <div class="button_contents">Right 90</div>
+            </td>
+          </tr>
+
+          <!-- fourth row -->
+          <tr>
+            <td >
+            </td>
+            <td>
+            </td>
+            <td id="TRN_LT_180" class="panel_button left_style">
+               <div class="button_contents">Left 180</div>
+            </td>
+            <td id="TRN_RT_180" class="panel_button right_style">
+               <div class="button_contents">Right 180</div>
+            </td>
+          </tr>
+        </table>
+      </td>
+
+      <td>
+        <div class="code_container">
+          <div class="main_pane">
+              <div class="panel_title" onclick="forceRefresh(event)">Movement Plan<span id="coms_status"> ..connecting</span></div>
+            <div id="lines_of_code"></div>
+          </div>
+          <table width="100%" style="vertical-align:bottom;">
+            <tr>
+              <td>
+                <div id="button_undo" class="code_button undo_button" onclick="undoCode(event)"><div class="code_button_contents">Undo</div></div>
+              </td>
+              <td>
+                <div id="button_clear" class="code_button clear_plan_button" onclick="clearCode(event)"><div class="code_button_contents">Clear Plan</div></div>
+              </td>
+              <td>
+                <div id="button_send" class="code_button" onclick="sendCode(event)"><div class="code_button_contents">UPLINK</div></div>
+              </td>
+            </tr>
+          </table>
+          <div><img src="Explo-GUI-BU-turn.jpg" width="380" height="330"/></div>
+        </div>
+      </td>
+    </tr>
+    </table>
+    <script src="motion_script.js"></script>
+  </body>
+</html>
