@@ -661,8 +661,8 @@ void addAllFiles()
   File file = root.openNextFile();
   while (file)
   {
-    Serial.print("  FILE: ");
-    Serial.println(file.name());
+    // Serial.print("  FILE: ");
+    // Serial.println(file.name());
     server.on("/" + String(file.name()), handlePageRequest);
     file = root.openNextFile();
   }
@@ -760,6 +760,16 @@ void setup()
  	display.setTextSize(1);
 	display.setTextColor(WHITE);
 	status_update("boxbot - start");
+
+  // check to see if the D25 pin is grounded (before we set anything else up)
+  // if it is, we'll reset the settings to default
+  pinMode(25, INPUT_PULLUP);
+  sleep(1);
+  if (digitalRead(25) == LOW)
+  {
+    status_update("settings reset");
+    reset_settings();
+  }
 
   // rtc.setTime(30,15,23,2,3,2023); // setup the time (this is for the sensors)
   // Serial.println("\n\nBoxbot v0.6 --------");
@@ -906,6 +916,9 @@ void setup()
   // setup complete
   status_update("boxbot ready");
 }
+
+
+int last_value = 0;
 
 void loop()
 {
