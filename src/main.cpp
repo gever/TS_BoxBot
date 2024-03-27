@@ -743,6 +743,7 @@ void setup()
 {
   String ip_addr_str = "<not set>";
   bool spiffs_ok = false;
+  uint8_t mac[8];
 
   Serial.begin(115200);
   while (!Serial)
@@ -761,13 +762,23 @@ void setup()
 	display.setTextColor(WHITE);
 	status_update("boxbot - start");
 
+  // get the MAC address
+  esp_read_mac(mac, ESP_MAC_WIFI_STA);
+
+  // check the buffer_ap_ssid and replace the * with the last two bytes of the MAC address
+  char *p = strchr(buffer_ap_ssid, '*');
+  if (p) {
+    snprintf(p, 3, "%02X", mac[4]);
+    snprintf(p + 2, 3, "%02X", mac[5]);
+  }
+
   // check to see if the D25 pin is grounded (before we set anything else up)
   // if it is, we'll reset the settings to default
   pinMode(25, INPUT_PULLUP);
   sleep(1);
   if (digitalRead(25) == LOW)
   {
-    status_update("settings reset");
+    status_update("factory reset");
     reset_settings();
   }
 

@@ -9,7 +9,7 @@
 #define RESET_LINEAR_MOTION_FUDGE 1.0
 #define RESET_WHEELS_FORWARD    true
 #define RESET_USE_WIFI          false
-#define RESET_AP_SSID           "wacky-squirrel"
+#define RESET_AP_SSID           "boxbot-*" // * is replaced with the last 2 bytes of the MAC address
 #define RESET_AP_PASSWORD       ""
 #define RESET_NETWORK_SSID      "your_ssid_here"
 #define RESET_NETWORK_PASSWORD  "your_password_here"
