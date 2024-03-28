@@ -325,7 +325,7 @@ async function bbSetServoAngle(servo_id, angle) {
     return;
   }
   // TODO: generalize the servo initialization to allow for different min/max angles
-  const adjAngle = Math.round(angle * 2); // = Math.min(90, Math.max(-90, Math.round(angle)));
+  const adjAngle = Math.round(angle);
   logCommandMsg('set servo ID ' + servo_id + ' angle ' + adjAngle);
   await bbFetchWait("/servoGo?pin=" + servo_id + "&angle=" + adjAngle);
 }
