@@ -36,15 +36,15 @@ typedef struct {
 } setting_t;
 
 setting_t settings[] = {
-  {"motor-step-rate",     .int_target   = &motor_step_rate,     .type = INT},
-  {"linear-turn-fudge",   .float_target = &linear_turn_fudge,   .type = FLOAT},
-  {"linear-motion-fudge", .float_target = &linear_motion_fudge, .type = FLOAT},
-  {"wheels-forward",      .bool_target  = &wheels_forward,      .type = BOOL},
   {"use-wifi",            .bool_target  = &use_wifi,            .type = BOOL},
   {"ap-ssid",            .string_target = buffer_ap_ssid,       .type = STRING},
   {"ap-password",        .string_target = buffer_ap_password,   .type = STRING},
   {"network-ssid",       .string_target = buffer_network_ssid,  .type = STRING},
-  {"network-password",   .string_target = buffer_network_password, .type = STRING}
+  {"network-password",   .string_target = buffer_network_password, .type = STRING},
+  {"motor-step-rate",     .int_target   = &motor_step_rate,     .type = INT},
+  {"linear-turn-fudge",   .float_target = &linear_turn_fudge,   .type = FLOAT},
+  {"linear-motion-fudge", .float_target = &linear_motion_fudge, .type = FLOAT},
+  {"wheels-forward",      .bool_target  = &wheels_forward,      .type = BOOL}
 };
 
 // reset the settings to their default values

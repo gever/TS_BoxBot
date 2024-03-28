@@ -766,18 +766,23 @@ void setup()
   esp_read_mac(mac, ESP_MAC_WIFI_STA);
 
   // check the buffer_ap_ssid and replace the * with the last two bytes of the MAC address
-  char *p = strchr(buffer_ap_ssid, '*');
-  if (p) {
-    snprintf(p, 3, "%02X", mac[4]);
-    snprintf(p + 2, 3, "%02X", mac[5]);
+  for (int i = 0; i < strlen(buffer_ap_ssid); i++)
+  {
+    if (buffer_ap_ssid[i] == '*')
+    {
+      char temp_ap_ssid[32];
+      buffer_ap_ssid[i] = 0;  // null terminate the string at the '*'
+      sprintf(temp_ap_ssid, "%s%02X", buffer_ap_ssid, mac[4] ^ mac[5]);
+      strcpy(buffer_ap_ssid, temp_ap_ssid);
+      break;
+    }
   }
 
   // check to see if the D25 pin is grounded (before we set anything else up)
   // if it is, we'll reset the settings to default
-  pinMode(25, INPUT_PULLUP);
+  pinMode(12, INPUT_PULLUP);
   sleep(1);
-  if (digitalRead(25) == LOW)
-  {
+  if (digitalRead(12) == LOW) {
     status_update("factory reset");
     reset_settings();
   }
@@ -785,20 +790,16 @@ void setup()
   // rtc.setTime(30,15,23,2,3,2023); // setup the time (this is for the sensors)
   // Serial.println("\n\nBoxbot v0.6 --------");
 
-  if (!SPIFFS.begin(true))
-  {
+  if (!SPIFFS.begin(true)) {
     status_update("ERR: SPIFFS mount failed");
     spiffs_ok = false;
-  }
-  else
-  {
+  } else {
     status_update("SPIFFS mounted");
     spiffs_ok = true;
   }
 
   // load settings from SPIFFS before starting the network and server
-  if (spiffs_ok)
-  {
+  if (spiffs_ok) {
     load_settings();
   }
 
@@ -861,7 +862,7 @@ void setup()
 
   // if we're not connected to wifi, start an access point
   if (!use_wifi || (WiFi.status() != WL_CONNECTED)) {
-    status_update("Starting wifi", buffer_ap_ssid);
+    status_update("Starting wifi: ", buffer_ap_ssid);
     WiFi.softAP(buffer_ap_ssid);
     IPAddress myIP = WiFi.softAPIP();
     // WiFi.softAPsetHostname(hostname);
@@ -916,7 +917,7 @@ void setup()
   // (format for two lines so it doesn't get cut off)
   if (network_ap_mode) {
     status_update("AP mode:");
-    status_update(buffer_ap_ssid);
+    // status_update(buffer_ap_ssid);
     activity_update(buffer_ap_ssid);
   } else {
     status_update("Connected to:");
