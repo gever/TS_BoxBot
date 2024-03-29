@@ -22,5 +22,6 @@ float getAccel_x();
 float getAccel_y(); 
 float getAccel_z(); 
 void setupAccel(); 
-void testMove(); 
+void testMove();
+void sensors_setup();
 ///Gyroscope getGyroscope();

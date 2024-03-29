@@ -778,7 +778,7 @@ void setup()
     }
   }
 
-  // check to see if the D25 pin is grounded (before we set anything else up)
+  // check to see if the D12 pin is grounded (before we set anything else up)
   // if it is, we'll reset the settings to default
   pinMode(12, INPUT_PULLUP);
   sleep(1);
@@ -877,7 +877,6 @@ void setup()
 
   // dynamic pages
   status_update("Starting server");
-  // server.on("/", handleLandingPage);
   server.on("/move", handleMove);      // immediate move
   server.on("/turn", handleTurn);      // immediate turn
   server.on("/stop", handleStop);      // immediate stop (of everything)
@@ -910,8 +909,8 @@ void setup()
   servoInit();
 
   // warm up the sensors (that need it)
-  volatile int lum1 = getLuminosity1();
-  volatile int lum2 = getLuminosity2();
+  status_update("Initialize sensors");
+  sensors_setup();
 
   // share network info as last thing on the display
   // (format for two lines so it doesn't get cut off)

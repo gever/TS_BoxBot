@@ -25,19 +25,30 @@ bool accelerometer = true;
 bool gyroscope = true; 
 bool temperature = false; 
 
+void sensors_setup() {
+  // setup the sensors 
+  setupAccel();
+  pinMode(luminosityPin1, INPUT_PULLDOWN);
+  pinMode(luminosityPin2, INPUT_PULLDOWN);
+}
+
 // LUMINOSITY
 // take an average of N samples
-float sampleLuminosity(int which) {
-  float sum = 0;
-  for (int i=0; i<5; i++) {
-    sum += analogRead(which);
-    delay(2); // time for the analog accumulator to re-settle
+bool sampleLuminosity(int which) {
+  // treat the pin as a digital input
+  // average N digital samples
+  int N = 4;
+  int sum = 0;
+  for (int i = 0; i < N; i++) {
+    sum += digitalRead(which);
   }
-  return sum/5.0;
+  return sum >= N/2;
 }
+
 int getLuminosity1(void) {
     return sampleLuminosity(luminosityPin1);
 }
+
 int getLuminosity2(void) {
     return sampleLuminosity(luminosityPin2);
 }
