@@ -4,21 +4,75 @@
 <head>
   <title>BOXBOT</title>
   <style>
-    .centered-svg {
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
-      width: 400px;
-      /* Adjust width as needed */
+    body {
+      background-color: #f0f0f0;
+      font-family: Arial, sans-serif;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    td {
+      padding: 10px;
+      border: 1px solid #000;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      font-size: 20px;
+      background-color: #dc9353;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #be5900;
+    }
+    .centered {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
     }
   </style>
 </head>
 
 <body>
-  <div class="centered-svg">
-    <object data="boxbot-index-panel.svg" type="image/svg+xml" class="centered-svg">
-      <img src="fallback.png" alt="SVG image">
-    </object>
+  <div class="centered">
+    <h1 style="text-align: center;">boxbot</h1>
+    <img src="boxbot_icon.png" style="display: block; margin: auto; width: 100px;">
+    <div>&nbsp;</div>
+    <table>
+      <tr>
+        <td>
+          <button onclick="launch('program')">Program</button>
+        </td>
+        <td>
+          Write and run programs.
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <button onclick="launch('plan')">Plan</button>
+        </td>
+        <td>
+          Plan and execute tasks.
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <button onclick="launch('settings')">Settings</button>
+        </td>
+        <td>
+          Configure boxbot settings.
+        </td>
+      </tr>
+    </table>
   </div>
   <script>
     function launch(dest) {
