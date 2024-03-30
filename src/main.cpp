@@ -9,6 +9,8 @@
 #include <WebServer.h>
 #include <FS.h>
 #include <SPIFFS.h>
+#include <DNSServer.h>
+
 // #include <mdns.h>
 #include "util.h"
 #include "sensors.h"
@@ -57,6 +59,14 @@ hw_timer_t *step_timer = NULL;
 
 const bool FWD = true;
 const bool BWD = false;
+
+// add dns server
+const byte DNS_PORT = 53;
+DNSServer dnsServer;
+
+// domain name for the DNS server, can't use .local conflicts with multicast DNS (mDNS) or Bonjour services
+const char *dnsDomain = "boxbot.home";  
+
 
 #define DW(p, v) digitalWrite(p, v)
 #define SET_BITS(a, b, c, d) \
@@ -868,12 +878,23 @@ void setup()
     // WiFi.softAPsetHostname(hostname);
     ip_addr_str = myIP.toString();
     network_ap_mode = true;
+
+    String ipStr = "AP IP: " + myIP.toString();
+    status_update(ipStr.c_str());
+
+    // start dnsServer
+    dnsServer.start(DNS_PORT, dnsDomain, myIP);
+    status_update("DNS Server Started");
+    status_update("local DN: ", dnsDomain);
+
   } else {
     ip_addr_str = WiFi.localIP().toString();
   }
 
   // mdns_init();
   // mdns_hostname_set(ssid);
+
+
 
   // dynamic pages
   status_update("Starting server");
@@ -933,6 +954,7 @@ int last_value = 0;
 
 void loop()
 {
+  dnsServer.processNextRequest();  // Handle DNS requests
   server.handleClient(); // close out any open/pending web transactions
   executePlan();         // returns immediately if there's no plan, loops there if there is a plan
 }

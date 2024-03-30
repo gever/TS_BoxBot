@@ -4,6 +4,9 @@ build:
 install:
 	pio run -e esp32dev --target upload
 
+install-monitor:
+	pio run -e esp32dev --target upload --target monitor
+
 monitor:
 	pio device monitor
 
