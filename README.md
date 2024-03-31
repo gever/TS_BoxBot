@@ -42,5 +42,19 @@ Servo Pins:
 * IN --> 33
 * IN --> 25 
 
-Servo/Luminosity Use Notes: 
+**Servo/Luminosity Use Notes:** 
 If you want to have both servos and luminosity sensors attached you will want to put the servos on the Servo 1 and Servo 3 connectors (D12 and D25 respectively), and the luminosity sensors on Servo 2 and 4 (D32 and D33). This is because GPIO pin 25 cannot be used for input because it is used for the Wifi module built into the chip - *but it can be used as a PWM output to drive a servo.*
+
+
+**development system setup**
+Right now, we have only figured out how to "bake cookies" from within VS Code. It should be possible to 
+do all of the development steps from the command line as well - *we just haven't worked on that yet*.
+1. download visual studio code (mac and linux seem to talk to the board most reliably) -- this may involve installing some form of git.
+2. From VSCode, clone this repository (which should automatically install Platform IO and the ESP32 development tools)
+3. Restart VSCode
+
+**baking cookies**
+Once VS Code is all settled down and ready to get some work done:
+1. in the Platform IO panel, select Project Tasks > esp32dev > Platform > Build Filestystem Image
+2. then, Project Tasks > esp32dev > Platform > Upload Filesystem Image
+3. then, Project Tasks > esp32dev > General > Upload
