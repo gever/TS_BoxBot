@@ -42,10 +42,11 @@
   </style>
 </head>
 
-<body>
+<body onload="getVersion()">
   <div class="centered">
     <h1 style="text-align: center;">boxbot</h1>
     <img src="boxbot_icon.png" style="display: block; margin: auto; width: 100px;">
+    <div id="version_txt" style="text-align: center; width: 100%;">---</div>
     <div>&nbsp;</div>
     <table>
       <tr>
@@ -88,6 +89,15 @@
       if (dest == "drive") {
         window.location.href = "drive.html";
       }
+    }
+    // get the current version of the app
+    function getVersion() {
+    fetch('/version')
+      .then(response => response.text())
+      .then(text => {
+        console.log('Current version: ' + text);
+        document.getElementById('version_txt').innerText = 'Version: ' + text;
+      });
     }
   </script>
 </body>

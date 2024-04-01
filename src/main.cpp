@@ -24,6 +24,13 @@
 #define SCREEN_HEIGHT 64
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
+//
+// canonical version number
+// 0.6: sent to PVUSD on 2021-04-01
+// 0.7: establish canonical version number, add DNS server, and version api
+//
+#define VERSION "0.7"
+
 // activity messages go to the top line of the display
 void activity_update(const char *msg);
 void activity_update(const char *msg1, const char *msg2);
@@ -746,6 +753,12 @@ void status_update(const char *msg1, const char *msg2, const char *msg3)
   status_update(buf);
 }
 
+// version API - plain text
+void handleVersion()
+{
+  server.send(200, "text/plain", VERSION);
+}
+
 // we always fall back to AP mode if we can't connect to the network
 bool network_ap_mode = true;
 
@@ -782,7 +795,7 @@ void setup()
     {
       char temp_ap_ssid[32];
       buffer_ap_ssid[i] = 0;  // null terminate the string at the '*'
-      sprintf(temp_ap_ssid, "%s%02X", buffer_ap_ssid, mac[4] ^ mac[5]);
+      sprintf(temp_ap_ssid, "%s%02X%02X", buffer_ap_ssid, mac[4] ^ mac[5], mac[2] ^ mac[3]);
       strcpy(buffer_ap_ssid, temp_ap_ssid);
       break;
     }
@@ -914,6 +927,7 @@ void setup()
   server.on("/led", handleLED); // led 
   server.on("/setvar", handleSetVar);
   server.on("/getvars", handleGetVars);
+  server.on("/version", handleVersion);
   server.onNotFound(handleNotFound); // generic page handler
   server.begin();
 
@@ -946,7 +960,7 @@ void setup()
   status_update(ip_addr_str.c_str());
 
   // setup complete
-  status_update("boxbot ready");
+  status_update("boxbot", VERSION, "ready");
 }
 
 
