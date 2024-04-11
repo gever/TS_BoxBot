@@ -687,14 +687,21 @@ void addAllFiles()
   server.on("/", handlePageRequest);
 }
 
+bool license_plate_detected = false;
+
 // display current status or boot progress
 #define TEXT_LINES 6
 #define TEXT_LINE_LEN 32
 #define TEXT_DISPLAY_TOP 16   // where the text display starts (empirically determined)
+
 // bold yellow messages
 bool first_activity = true;
 void activity_update(const char *msg) {
   Serial.println(msg);
+  if (!license_plate_detected) {
+    return;
+  }
+
   if (first_activity) {
     first_activity = false;
     display.clearDisplay();
@@ -726,6 +733,10 @@ void status_init() {
 void status_update(const char *msg)
 {
   Serial.println(msg);
+  if (!license_plate_detected) {
+    return;
+  }
+
   // scroll up, write new message at bottom of screen
   memcpy(status_buffer[0], status_buffer[1], TEXT_LINE_LEN * (TEXT_LINES - 1));
   strncpy(&status_buffer[TEXT_LINES - 1][0], msg, TEXT_LINE_LEN - 1);
@@ -775,6 +786,17 @@ void setup()
   } // wait for serial port to connect. Needed for native USB port only
   Serial.println("starting boxbot");
   status_init();
+
+  // check to see if the OLED display is at I2C address 0x3C
+  Wire.begin();
+  Wire.beginTransmission(0x3C);
+  if (Wire.endTransmission() == 0) {
+    Serial.println("OLED found at 0x3C");
+    license_plate_detected = true;
+  } else {
+    Serial.println("OLED not found at 0x3C");
+    license_plate_detected = false;
+  }
 
   //------------------------------------------
   // Setup OLED early so that status messages can be displayed
