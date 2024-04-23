@@ -316,35 +316,68 @@ void handleNotFound()
 
 void handleMove()
 {
-  if (server.args())
-  {
+  unsigned long startTime = millis();
+  unsigned long setupTime = 0;
+
+  if (server.args()) {
     int v = server.arg(0).toInt(); // negative for backwards movement
+    unsigned long cmdStartTime = millis();
     setup_move(v < 0 ? BWD : FWD, ABS(v));
+    unsigned long cmdEndTime = millis();
+    setupTime = cmdEndTime - cmdStartTime;
+
     if (v < 0) {
       activity_update("BWD", String(-v).c_str());
     } else {
       activity_update("FWD", String(v).c_str());
     }
+  } else {
+    server.send(400, "application/json", "{\"status\":\"Error: No arguments provided\"}");
+    return;
   }
+
   server.send(200, "application/json", "{\"status\":\"ACK\"}");
+
+  unsigned long endTime = millis();
+  Serial.print("Total handleMove execution time: ");
+  Serial.print(endTime - startTime);
+  Serial.println(" ms");
+  Serial.print("setup_move execution time: ");
+  Serial.print(setupTime);
+  Serial.println(" ms");
 }
 
 void handleTurn()
 {
-  // TODO: clean up the semantics of the turn command
-  //       (there is legacy API here that is from the old BU code)
+  unsigned long startTime = millis();
+  unsigned long setupTime = 0;
+
   if (server.args())
   {
     int v = server.arg(0).toInt();
+    unsigned long cmdStartTime = millis();
     setup_turn(v < 0 ? 1 : 0, ABS(v)); // negative for left turns
-    // Serial.println("handleTurn: " + String(v));
+    unsigned long cmdEndTime = millis();
+    setupTime = cmdEndTime - cmdStartTime;
+
     if (v < 0) {
       activity_update("LFT", String(-v).c_str());
     } else {
       activity_update("RGT", String(v).c_str());
     }
+  } else {
+    server.send(400, "application/json", "{\"status\":\"Error: No arguments provided\"}");
+    return;
   }
   server.send(200, "application/json", "{\"status\":\"ACK\"}");
+
+  unsigned long endTime = millis();
+  Serial.print("Total handleTurn execution time: ");
+  Serial.print(endTime - startTime);
+  Serial.println(" ms");
+  Serial.print("setup_turn execution time: ");
+  Serial.print(setupTime);
+  Serial.println(" ms");
 }
 
 void handleStop()
