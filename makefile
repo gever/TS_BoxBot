@@ -2,9 +2,27 @@
 build:
 	pio run -e esp32dev
 
-# Release build - optimized and for production use
+# Build the release version of the firmware
 release:
 	pio run -e release
+
+# Build the SPIFFS image for the release environment
+buildfs-release:
+	pio run -e release -t buildfs
+
+# Build the SPIFFS image for the development environment
+buildfs-dev:
+	pio run -e esp32dev -t buildfs
+
+# Combined target to build both the firmware and SPIFFS image for release
+all-release:
+	pio run -e release
+	pio run -e release -t buildfs
+
+# Combined target to build both the firmware and SPIFFS image for development
+all-dev:
+	pio run -e esp32dev
+	pio run -e esp32dev -t buildfs
 
 # Package firmware binaries for distribution under a specific directory
 package: release
@@ -18,6 +36,7 @@ package: release
 	cp .pio/build/release/bootloader.bin release_to_manufacture/release_package/
 	cp .pio/build/release/firmware.bin release_to_manufacture/release_package/
 	cp .pio/build/release/partitions.bin release_to_manufacture/release_package/
+	cp .pio/build/release/spiffs.bin release_to_manufacture/release_package/
 	@echo "Creating zip file in release_to_manufacture directory..."
 	cd release_to_manufacture && zip -r release_package.zip release_package
 	@echo "Package ready at release_to_manufacture/release_package.zip"
