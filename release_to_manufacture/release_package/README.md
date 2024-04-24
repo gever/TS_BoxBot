@@ -13,7 +13,7 @@ Before you begin, ensure that you have the following prerequisites installed on 
 
 2. Navigate to the Script Directory: Open a terminal and change to the directory containing the extracted files.
 
-3. Connect the ESP32: Ensure that the ESP32 device is connected to your computer via a USB-to-serial adapter. Check the serial port name assigned to your device (e.g., /dev/ttyUSB0 on Linux or COM3 on Windows).   On mac, to look for port, command `ls /dev/tty.*`,  look for something that resembles /dev/tty.SLAB_USBtoUART or /dev/tty.usbserial-0001., e.g. 
+3. Connect the ESP32: Ensure that the ESP32 device is connected to your computer via a USB-to-serial adapter. Check the serial port name assigned to your device (e.g., /dev/ttyUSB0 on Linux or COM3 on Windows).   On linux, `ls /dev/ttyUSB*`,  On Windows, `mode`, On mac, to look for port, command `ls /dev/tty.*`,  look for something that resembles /dev/tty.SLAB_USBtoUART or /dev/tty.usbserial-0001., e.g. 
 
 `chmod +x flash_firmware.sh`
 
