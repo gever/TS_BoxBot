@@ -183,7 +183,7 @@ MarsStepper m1(13, 14, 27, 26);
 MarsStepper m2(15, 2, 4, 19); // this is changed!
 
 const float rot_steps = 2038 * 2;                                                   // one full rotation of the motor shaft
-const float boxbot_body_rad = 55;                                                   // the distance from the pen to the wheel in mm
+const float boxbot_body_rad = 125/2.0f;                                             // the distance from the pen to the wheel in mm
 const float boxbot_turn_circ = PI * 2.0 * boxbot_body_rad;                          // circumference of circle described by the wheels
 const float boxbot_wheel_rad = 25;                                                  // in mm
 const float boxbot_wheel_circ = PI * 2.0 * boxbot_wheel_rad;                        // circumference of the wheel in mm
