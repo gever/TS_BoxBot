@@ -437,27 +437,39 @@ void handleDistance()
 void handleAccel_x()
 {
   char jsonBuffer[JSON_BUFFER_SIZE];
+  /*
   float v = getAccel_x();
   snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"accel x\":%f}", v);
   activity_update("ACCX", String(v).c_str());
+  */
+  // put a not-supported message in the buffer
+  snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"accel x\":\"not supported\"}");
   server.send(200, "application/json", jsonBuffer);
 }
 
 void handleAccel_y()
 {
   char jsonBuffer[JSON_BUFFER_SIZE];
+  /*
   float v = getAccel_y();
   snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"accel y\":%d}", v);
   activity_update("ACCY", String(v).c_str());
+  */
+  // put a not-supported message in the buffer
+  snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"accel y\":\"not supported\"}");
   server.send(200, "application/json", jsonBuffer);
 }
 
 void handleAccel_z()
 {
   char jsonBuffer[JSON_BUFFER_SIZE];
+  /*
   float v = getAccel_z();
   snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"accel z\":%d}", v);
   activity_update("ACCZ", String(v).c_str());
+  */
+  // put a not-supported message in the buffer
+  snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"accel z\":\"not supported\"}");
   server.send(200, "application/json", jsonBuffer);
 }
 
@@ -1000,7 +1012,8 @@ void setup()
 
   // warm up the sensors (that need it)
   status_update("Initialize sensors");
-  sensors_setup();
+  // sensors are initialized on first-use
+  // sensors_setup();
 
   // share network info as last thing on the display
   // (format for two lines so it doesn't get cut off)

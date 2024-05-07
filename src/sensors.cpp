@@ -4,6 +4,7 @@
 #include "sensors.h"
 #include "main.h"
 
+#ifdef NOT_USED
 Adafruit_MPU6050 mpu;
 Adafruit_Sensor *mpu_temp, *mpu_accel, *mpu_gyro;
 
@@ -13,6 +14,11 @@ bool statusLuminosity = true;
 bool statusAccelerometer = false; 
 bool statusGyroscope = false; 
 bool statusTemperature = false; 
+// MPU6050 uses I2C: SDA (21) and SCL (22)
+bool accelerometer = true; 
+bool gyroscope = true; 
+bool temperature = false; 
+#endif // NOT_USED
 
 // allocate pins 
 const int pingPin = 5;  // Trigger Pin of Ultrasonic Sensor
@@ -20,16 +26,18 @@ const int echoPin = 18; // Echo Pin of Ultrasonic Sensor
 const int luminosityPin1 = 32; // Labeled "Servo 2" on the carrier board 
 const int luminosityPin2 = 33; // Labeled "Servo 4" on the carrier board 
 
-// MPU6050 uses I2C: SDA (21) and SCL (22)
-bool accelerometer = true; 
-bool gyroscope = true; 
-bool temperature = false; 
+
+bool sensors_initialized = false;
 
 void sensors_setup() {
+  if (sensors_initialized) {
+    return;
+  }
   // setup the sensors 
-  setupAccel();
+  // setupAccel();
   pinMode(luminosityPin1, INPUT_PULLDOWN);
   pinMode(luminosityPin2, INPUT_PULLDOWN);
+  sensors_initialized = true;
 }
 
 // LUMINOSITY
@@ -46,11 +54,13 @@ bool sampleLuminosity(int which) {
 }
 
 int getLuminosity1(void) {
-    return sampleLuminosity(luminosityPin1);
+  sensors_setup();
+  return sampleLuminosity(luminosityPin1);
 }
 
 int getLuminosity2(void) {
-    return sampleLuminosity(luminosityPin2);
+  sensors_setup();
+  return sampleLuminosity(luminosityPin2);
 }
 
 // get distance 
@@ -81,6 +91,7 @@ int getDistance(void){
 }
 
 
+#ifdef NOT_USED
 void setupAccel() {
   // Accelerometer 
   if (false){ // making this false so that the acceleromter doesn't go off THIS IS A PROBLEM TO RESOLVE
@@ -142,7 +153,7 @@ float getAccel_z() {
   Serial.print(v);
   return v;
 }
-
+#endif // NOT_USED
 
 
 /*
