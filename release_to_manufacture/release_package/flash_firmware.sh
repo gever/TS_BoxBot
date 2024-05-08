@@ -16,7 +16,7 @@ fi
 echo "Using $PYTHON_CMD for flashing..."
 
 # Check if esptool is installed
-$ESP_CMD="esptool.py"
+ESP_CMD="esptool.py"
 if ! $ESP_CMD --version &> /dev/null
 then
     echo "esptool.py is not installed"
