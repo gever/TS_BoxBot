@@ -7,7 +7,8 @@
 #define RESET_MOTOR_STEP_RATE   950
 #define RESET_LINEAR_TURN_FUDGE 1.0
 #define RESET_LINEAR_MOTION_FUDGE 1.0
-#define RESET_WHEELS_FORWARD    true
+#define RESET_INVERT_DIRECTION  false
+#define RESET_INVERT_TURN       false
 #define RESET_USE_WIFI          false
 #define RESET_AP_SSID           "boxbot*" // * is replaced with the identifier generated from the MAC address
 #define RESET_AP_PASSWORD       ""
@@ -16,7 +17,8 @@
 uint16_t motor_step_rate         = RESET_MOTOR_STEP_RATE;
 float linear_turn_fudge          = RESET_LINEAR_TURN_FUDGE;
 float linear_motion_fudge        = RESET_LINEAR_MOTION_FUDGE;
-bool wheels_forward              = RESET_WHEELS_FORWARD;
+bool invert_direction            = RESET_INVERT_DIRECTION;
+bool invert_turn                 = RESET_INVERT_TURN;
 bool use_wifi                    = RESET_USE_WIFI;
 char buffer_ap_ssid[SETTINGS_STR_BUFFER_SIZE]          = RESET_AP_SSID;
 char buffer_ap_password[SETTINGS_STR_BUFFER_SIZE]      = RESET_AP_PASSWORD;
@@ -37,14 +39,15 @@ typedef struct {
 
 setting_t settings[] = {
   {"use-wifi",            .bool_target  = &use_wifi,            .type = BOOL},
-  {"ap-ssid",            .string_target = buffer_ap_ssid,       .type = STRING},
-  {"ap-password",        .string_target = buffer_ap_password,   .type = STRING},
-  {"network-ssid",       .string_target = buffer_network_ssid,  .type = STRING},
-  {"network-password",   .string_target = buffer_network_password, .type = STRING},
+  {"ap-ssid",             .string_target = buffer_ap_ssid,       .type = STRING},
+  {"ap-password",         .string_target = buffer_ap_password,   .type = STRING},
+  {"network-ssid",        .string_target = buffer_network_ssid,  .type = STRING},
+  {"network-password",    .string_target = buffer_network_password, .type = STRING},
   {"motor-step-rate",     .int_target   = &motor_step_rate,     .type = INT},
   {"linear-turn-fudge",   .float_target = &linear_turn_fudge,   .type = FLOAT},
   {"linear-motion-fudge", .float_target = &linear_motion_fudge, .type = FLOAT},
-  {"wheels-forward",      .bool_target  = &wheels_forward,      .type = BOOL}
+  {"invert-direction",    .bool_target  = &invert_direction,      .type = BOOL},
+  {"invert-turn",         .bool_target  = &invert_turn,      .type = BOOL},
 };
 
 // reset the settings to their default values
@@ -52,7 +55,8 @@ void reset_settings() {
   motor_step_rate = RESET_MOTOR_STEP_RATE;
   linear_turn_fudge = RESET_LINEAR_TURN_FUDGE;
   linear_motion_fudge = RESET_LINEAR_MOTION_FUDGE;
-  wheels_forward = RESET_WHEELS_FORWARD;
+  invert_direction = RESET_INVERT_DIRECTION;
+  invert_turn = RESET_INVERT_TURN;
   use_wifi = RESET_USE_WIFI;
   strncpy(buffer_ap_ssid, RESET_AP_SSID, SETTINGS_STR_BUFFER_SIZE);
   strncpy(buffer_ap_password, RESET_AP_PASSWORD, SETTINGS_STR_BUFFER_SIZE);

@@ -29,7 +29,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 // 0.6: sent to PVUSD on 2021-04-01
 // 0.7: establish canonical version number, add DNS server, and version api
 //
-#define VERSION "0.7"
+#define VERSION "0.71"
 
 // activity messages go to the top line of the display
 void activity_update(const char *msg);
@@ -217,6 +217,7 @@ void setup_move(bool dir, int dist)
 {
   // SDEBUG("setup_move\ndir = ", dir);
   // SDEBUG("dist = ", dist);
+  if (invert_direction) dir = !dir;
   step_count = (dist * 10) * boxbot_steps_mm * linear_motion_fudge;
   if (dir)
   {
@@ -242,6 +243,7 @@ void setup_move(bool dir, int dist)
 */
 void setup_turn(bool dir, int angle)
 {
+  if (invert_turn) dir = !dir;
   step_count = boxbot_turn_steps * (((float)angle) / 360.0f) * linear_turn_fudge;
   if (dir)
   {
