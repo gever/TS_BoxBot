@@ -45,15 +45,11 @@
     </style>
 </head>
 <body>
-    <div id="logo">
-        <img src="boxbot_icon.png" onclick="document.location='index.html'" width="50px" height="50px"/>
-        Boxbot v0.6
-    </div>
     <div class="controller">
         <div style="align-items: center;justify-content: center;">
-            <img src="boxbot_icon.png" width="32" height="32"/> 
+            <img src="boxbot_icon.png" onclick="document.location='index.html'" width="50px" height="50px"/>
         </div>
-        <h2>Boxbot Controller v0.5</h2>
+        <h2>Boxbot Stepper<br/>Drive Controller</h2>
         <div class="direction-buttons">
             <button id="fwd">Forward</button>
         </div>
@@ -65,24 +61,11 @@
         <div class="direction-buttons">
             <button id="bwd">Backward</button>
         </div>
-<!--
-        <div>
-            <button onclick="servoSetAngle(0)">0&deg;</button>
-            <button onclick="servoSetAngle(10)">10&deg;</button>
-            <button onclick="servoSetAngle(20)">20&deg;</button>
-            <button onclick="servoSetAngle(30)">30&deg;</button>
-            <button onclick="servoSetAngle(40)">40&deg;</button>
-            <button onclick="servoSetAngle(50)">50&deg;</button>
-            <button onclick="servoSetAngle(60)">60&deg;</button>
-            <button onclick="servoSetAngle(70)">70&deg;</button>
-            <button onclick="servoSetAngle(80)">80&deg;</button>
-            <button onclick="servoSetAngle(90)">90&deg;</button>
-        </div>
--->
-        </div>
     </div>
 
     <script>
+        var DEFAULT_MOVE = 2;
+        var DEFAULT_TURN = 5;
         // Assigning event listeners to the buttons
         function servoSetAngle(angle) {
             fetch("/servoGo?pin=12&angle=" + angle);
@@ -90,22 +73,22 @@
 
         document.getElementById('fwd').addEventListener('click', function() {
             console.log('Fwd');
-            fetch("/move?dist=100");
+            fetch("/move?dist=" + DEFAULT_MOVE);
         });
 
         document.getElementById('bwd').addEventListener('click', function() {
             console.log('Bwd');
-            fetch("/move?dist=-100");
+            fetch("/move?dist=-" + DEFAULT_MOVE);
         });
 
         document.getElementById('left').addEventListener('click', function() {
             console.log('Left');
-            fetch("/turn?angle=-180");
+            fetch("/turn?angle=-" + DEFAULT_TURN);
         });
 
         document.getElementById('right').addEventListener('click', function() {
             console.log('Right');
-            fetch("/turn?angle=180");
+            fetch("/turn?angle=5");
         });
 
         document.getElementById('stop').addEventListener('click', function() {
@@ -122,16 +105,16 @@
 
             switch (event.code) {
                 case 'ArrowUp':
-                fetch("/move?dist=100");
+                fetch("/move?dist=2");
                 break;
                 case 'ArrowDown':
-                fetch("/move?dist=-100");
+                fetch("/move?dist=-2");
                 break;
                 case 'ArrowLeft':
-                fetch("/turn?angle=-180");
+                fetch("/turn?angle=-5");
                 break;
                 case 'ArrowRight':
-                fetch("/turn?angle=180");
+                fetch("/turn?angle=5");
                 break;
                 case 'Space':
                 fetch("/stop");
