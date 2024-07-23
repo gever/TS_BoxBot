@@ -9,7 +9,8 @@ Servo servo2;
 Servo servo3;
 Servo servo4;
 
-void servoGo(int which, int value){
+void servoGo(int which, int value) {
+  // TODO: initialize servos on first use
   switch(which) {
     case 1:
       servo1.write(value);
