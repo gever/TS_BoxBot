@@ -1,5 +1,6 @@
 #include <ArduinoJson.h>
 #include <FS.h>
+#include "status.h"
 
 // things that can be set through settings UI
 // TODO: store these in SPIFFS filesystem
@@ -50,19 +51,6 @@ setting_t settings[] = {
   {"invert-turn",         .bool_target  = &invert_turn,      .type = BOOL},
 };
 
-// reset the settings to their default values
-void reset_settings() {
-  motor_step_rate = RESET_MOTOR_STEP_RATE;
-  linear_turn_fudge = RESET_LINEAR_TURN_FUDGE;
-  linear_motion_fudge = RESET_LINEAR_MOTION_FUDGE;
-  invert_direction = RESET_INVERT_DIRECTION;
-  invert_turn = RESET_INVERT_TURN;
-  use_wifi = RESET_USE_WIFI;
-  strncpy(buffer_ap_ssid, RESET_AP_SSID, SETTINGS_STR_BUFFER_SIZE);
-  strncpy(buffer_ap_password, RESET_AP_PASSWORD, SETTINGS_STR_BUFFER_SIZE);
-  strncpy(buffer_network_ssid, RESET_NETWORK_SSID, SETTINGS_STR_BUFFER_SIZE);
-  strncpy(buffer_network_password, RESET_NETWORK_PASSWORD, SETTINGS_STR_BUFFER_SIZE);
-}
 // save the settings to SPIFFS as JSON
 void save_settings() {
   File file = SPIFFS.open("/settings.json", "w");
@@ -173,4 +161,20 @@ String render_settings() {
     }
   }
   return text;
+}
+
+// reset the settings to their default values
+void reset_settings() {
+  status_update("Resetting settings");
+  motor_step_rate = RESET_MOTOR_STEP_RATE;
+  linear_turn_fudge = RESET_LINEAR_TURN_FUDGE;
+  linear_motion_fudge = RESET_LINEAR_MOTION_FUDGE;
+  invert_direction = RESET_INVERT_DIRECTION;
+  invert_turn = RESET_INVERT_TURN;
+  use_wifi = RESET_USE_WIFI;
+  strncpy(buffer_ap_ssid, RESET_AP_SSID, SETTINGS_STR_BUFFER_SIZE);
+  strncpy(buffer_ap_password, RESET_AP_PASSWORD, SETTINGS_STR_BUFFER_SIZE);
+  strncpy(buffer_network_ssid, RESET_NETWORK_SSID, SETTINGS_STR_BUFFER_SIZE);
+  strncpy(buffer_network_password, RESET_NETWORK_PASSWORD, SETTINGS_STR_BUFFER_SIZE);
+  save_settings();
 }

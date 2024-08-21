@@ -10,19 +10,14 @@
 #include <FS.h>
 #include <SPIFFS.h>
 #include <DNSServer.h>
-
 // #include <mdns.h>
+
+#include "status.h"
 #include "util.h"
 #include "sensors.h"
 #include "servo.h"
 #include "led.h"
 
-// Display includes and defs
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
 //
 // canonical version number
@@ -30,18 +25,8 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 // 0.7: establish canonical version number, add DNS server, and version api
 // 0.71: fix forward/backward inversion settings
 // 0.72b: young robotics week version
-//
-#define VERSION "0.72b"
-
-// activity messages go to the top line of the display
-void activity_update(const char *msg);
-void activity_update(const char *msg1, const char *msg2);
-void activity_update(const char *msg1, const char *msg2, const char *msg3);
-
-// status messages scroll in the blue section of the display
-void status_update(const char *msg);
-void status_update(const char *msg1, const char *msg2);
-void status_update(const char *msg1, const char *msg2, const char *msg3);
+// 0.73: separate out status code, change default direction of motors 
+#define VERSION "0.73"
 
 #define SDEBUG(label, x) \
   {                      \
@@ -66,9 +51,6 @@ const char delim[] = ",\n";
 // hardware clock to step the motors at a good rate
 hw_timer_t *step_timer = NULL;
 
-const bool FWD = true;
-const bool BWD = false;
-
 // add dns server
 const byte DNS_PORT = 53;
 DNSServer dnsServer;
@@ -76,7 +58,12 @@ DNSServer dnsServer;
 // domain name for the DNS server, can't use .local conflicts with multicast DNS (mDNS) or Bonjour services
 const char *dnsDomain = "boxbot.home";  
 
-
+const bool FWD = true;  // forward in terms of the boxbot, not motor
+const bool BWD = false; // backward in terms of the boxbot, not motor
+const bool LFT = true;  // left in terms of the boxbot, not motor
+const bool RGT = false; // right in terms of the boxbot, not motor
+#define CW 1
+#define CCW 0
 #define DW(p, v) digitalWrite(p, v)
 #define SET_BITS(a, b, c, d) \
   {                          \
@@ -115,26 +102,31 @@ public:
     divisor = 1;      // how often step() calls should be heeded
 
     enabled = false;
-    dir = FWD;
+    dir = CW;
   }
+
   void set_direction(bool d)
   {
     // SDEBUG("set_direction = ", d);
     dir = d;
   }
+
   void enable()
   {
     enabled = true;
   }
+  
   void disable()
   {
     enabled = false;
     SET_BITS(0, 0, 0, 0);
   }
+
   void set_divisor(unsigned int v)
   {
     divisor = v;
   }
+  
   void step()
   {
     // always increment the counter
@@ -176,13 +168,13 @@ public:
       SET_BITS(1, 0, 0, 1);
       break;
     }
-    current_step += (dir ? 1 : -1); // FWD=true, BWD=false
+    current_step += (dir ? 1 : -1); // CW=true, CCW=false
   }
 };
 
 // create the motors
-MarsStepper m1(13, 14, 27, 26);
-MarsStepper m2(15, 2, 4, 19); // this is changed!
+MarsStepper motor_rt(13, 14, 27, 26); // right
+MarsStepper motor_lt(15, 2, 4, 19);   // left
 
 const float rot_steps = 2038 * 2;                                                   // one full rotation of the motor shaft
 const float boxbot_body_rad = 125/2.0f;                                             // the distance from the pen to the wheel in mm
@@ -205,8 +197,8 @@ int step_count = 0; // for the current motion, for all active motors
 */
 
 void setup_stop(){
-  m2.disable();
-  m1.disable();
+  motor_lt.disable();
+  motor_rt.disable();
 }
 
 
@@ -215,7 +207,7 @@ void setup_stop(){
    dir  - fwd=1, bwd=0
    dist - in centimeters
 */
-void setup_move(bool dir, int dist)
+void setup_move(boolean dir, int dist)
 {
   // SDEBUG("setup_move\ndir = ", dir);
   // SDEBUG("dist = ", dist);
@@ -224,17 +216,17 @@ void setup_move(bool dir, int dist)
   if (dir)
   {
     // SDEBUG("FWD:", dir);
-    m1.set_direction(0);
-    m2.set_direction(1);
+    motor_rt.set_direction(CCW);
+    motor_lt.set_direction(CW);
   }
   else
   {
     // SDEBUG("BWD:", dir);
-    m1.set_direction(1);
-    m2.set_direction(0);
+    motor_rt.set_direction(CW);
+    motor_lt.set_direction(CCW);
   }
-  m1.enable();
-  m2.enable();
+  motor_rt.enable();
+  motor_lt.enable();
 
   // start movement
   // timerAttachInterrupt(step_timer, &onTimer, true);
@@ -249,16 +241,16 @@ void setup_turn(bool dir, int angle)
   step_count = boxbot_turn_steps * (((float)angle) / 360.0f) * linear_turn_fudge;
   if (dir)
   {
-    m1.set_direction(1);
-    m2.set_direction(1);
+    motor_rt.set_direction(CCW);
+    motor_lt.set_direction(CCW);
   }
   else
   {
-    m1.set_direction(0);
-    m2.set_direction(0);
+    motor_rt.set_direction(CW);
+    motor_lt.set_direction(CW);
   }
-  m1.enable();
-  m2.enable();
+  motor_rt.enable();
+  motor_lt.enable();
 
   // start movement
   // timerAttachInterrupt(step_timer, &onTimer, true);
@@ -270,14 +262,14 @@ void step_the_motors()
   {
     step_count--;
 
-    m1.step();
-    m2.step();
+    motor_rt.step();
+    motor_lt.step();
 
     if (step_count == 0)
     {
       // save power, turn off the motors when not moving
-      m1.disable();
-      m2.disable();
+      motor_rt.disable();
+      motor_lt.disable();
       // TODO: evaluate possibility of turning off the interrupts while idle (might save power)
     }
   }
@@ -386,8 +378,8 @@ void handleTurn()
 
 void handleStop()
 {
-  m1.disable();
-  m2.disable();
+  motor_rt.disable();
+  motor_lt.disable();
   step_count = 0;
   plan_ready = false;
   activity_update("STOP");
@@ -736,83 +728,6 @@ void addAllFiles()
   server.on("/", handlePageRequest);
 }
 
-bool license_plate_detected = false;
-
-// display current status or boot progress
-#define TEXT_LINES 6
-#define TEXT_LINE_LEN 32
-#define TEXT_DISPLAY_TOP 16   // where the text display starts (empirically determined)
-
-// bold yellow messages
-bool first_activity = true;
-void activity_update(const char *msg) {
-  Serial.println(msg);
-  if (!license_plate_detected) {
-    return;
-  }
-
-  if (first_activity) {
-    first_activity = false;
-    display.clearDisplay();
-  } else {
-    display.fillRect(0, 0, 128, TEXT_DISPLAY_TOP, BLACK);
-  }
-  display.setTextSize(2);
-  display.setCursor(0, 0);
-  display.println(msg);
-  display.setTextSize(1);
-  display.display();
-}
-void activity_update(const char *msg1, const char *msg2) {
-  char buf[TEXT_LINE_LEN];
-  snprintf(buf, TEXT_LINE_LEN, "%s %s", msg1, msg2);
-  activity_update(buf);
-}
-void activity_update(const char *msg1, const char *msg2, const char *msg3) {
-  char buf[TEXT_LINE_LEN];
-  snprintf(buf, TEXT_LINE_LEN, "%s %s %s", msg1, msg2, msg3);
-  activity_update(buf);
-}
-
-// regular status messages
-char status_buffer[TEXT_LINES][TEXT_LINE_LEN];
-void status_init() {
-  memset(status_buffer, 0, sizeof(status_buffer));
-}
-void status_update(const char *msg)
-{
-  Serial.println(msg);
-  if (!license_plate_detected) {
-    return;
-  }
-
-  // scroll up, write new message at bottom of screen
-  memcpy(status_buffer[0], status_buffer[1], TEXT_LINE_LEN * (TEXT_LINES - 1));
-  strncpy(&status_buffer[TEXT_LINES - 1][0], msg, TEXT_LINE_LEN - 1);
-
-  // redraw the blue section of the display
-  display.fillRect(0, TEXT_DISPLAY_TOP, 128, 64 - TEXT_DISPLAY_TOP, BLACK);
-  display.setCursor(0, TEXT_DISPLAY_TOP);
-  for (int i = 0; i < TEXT_LINES; i++) {
-    display.println(status_buffer[i]);
-  }
-  display.display();
-}
-
-void status_update(const char *msg1, const char *msg2)
-{
-  char buf[TEXT_LINE_LEN];
-  snprintf(buf, TEXT_LINE_LEN, "%s %s", msg1, msg2);
-  status_update(buf);
-}
-
-void status_update(const char *msg1, const char *msg2, const char *msg3)
-{
-  char buf[TEXT_LINE_LEN];
-  snprintf(buf, TEXT_LINE_LEN, "%s %s %s", msg1, msg2, msg3);
-  status_update(buf);
-}
-
 // version API - plain text
 void handleVersion()
 {
@@ -834,52 +749,12 @@ void setup()
     delay(10);
   } // wait for serial port to connect. Needed for native USB port only
   Serial.println("starting boxbot");
-  status_init();
-
-  // check to see if the OLED display is at I2C address 0x3C
-  Wire.begin();
-  Wire.beginTransmission(0x3C);
-  if (Wire.endTransmission() == 0) {
-    Serial.println("OLED found at 0x3C");
-    license_plate_detected = true;
-  } else {
-    Serial.println("OLED not found at 0x3C");
-    license_plate_detected = false;
-  }
-
-  //------------------------------------------
-  // Setup OLED early so that status messages can be displayed
-	// currently: initialized with the I2C addr 0x3C
-	display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  
- 	display.clearDisplay();
- 	display.setTextSize(1);
-	display.setTextColor(WHITE);
+  license_plate_init();
+  activity_update("Hello!");
 	status_update("boxbot - start");
 
   // get the MAC address
   esp_read_mac(mac, ESP_MAC_WIFI_STA);
-
-  // check the buffer_ap_ssid and replace the * with the last two bytes of the MAC address
-  for (int i = 0; i < strlen(buffer_ap_ssid); i++)
-  {
-    if (buffer_ap_ssid[i] == '*')
-    {
-      char temp_ap_ssid[32];
-      buffer_ap_ssid[i] = 0;  // null terminate the string at the '*'
-      sprintf(temp_ap_ssid, "%s%02X%02X", buffer_ap_ssid, mac[4] ^ mac[5], mac[2] ^ mac[3]);
-      strcpy(buffer_ap_ssid, temp_ap_ssid);
-      break;
-    }
-  }
-
-  // check to see if the D12 pin is grounded (before we set anything else up)
-  // if it is, we'll reset the settings to default
-  pinMode(12, INPUT_PULLUP);
-  sleep(1);
-  if (digitalRead(12) == LOW) {
-    status_update("factory reset");
-    reset_settings();
-  }
 
   // rtc.setTime(30,15,23,2,3,2023); // setup the time (this is for the sensors)
   // Serial.println("\n\nBoxbot v0.6 --------");
@@ -894,23 +769,28 @@ void setup()
 
   // load settings from SPIFFS before starting the network and server
   if (spiffs_ok) {
+    // check to see if the D12 pin is grounded (before we set anything else up)
+    // if it is, we'll reset the settings to default
+    pinMode(12, INPUT_PULLUP);
+    sleep(1);
+    if (digitalRead(12) == LOW) {
+      status_update("factory reset");
+      reset_settings();
+    }
     load_settings();
   }
 
-  // inventory the available wifi networks
-  if (false) {
-    int n = WiFi.scanNetworks();
-    for (int i = 0; i < n; ++i) {
-      Serial.print(WiFi.SSID(i).length());
-      Serial.print(" : [");
-      Serial.print(WiFi.SSID(i).c_str());
-      Serial.println("]");
+  // check the buffer_ap_ssid and replace the * with the last two bytes of the MAC address
+  for (int i = 0; i < strlen(buffer_ap_ssid); i++)
+  {
+    if (buffer_ap_ssid[i] == '*')
+    {
+      char temp_ap_ssid[32];
+      buffer_ap_ssid[i] = 0;  // null terminate the string at the '*'
+      sprintf(temp_ap_ssid, "%s%02X%02X", buffer_ap_ssid, mac[4] ^ mac[5], mac[2] ^ mac[3]);
+      strcpy(buffer_ap_ssid, temp_ap_ssid);
+      break;
     }
-    // Serial.println("%d : %s\n", strlen(buffer_network_ssid), (char *)buffer_network_ssid);
-    Serial.print(strlen(buffer_network_ssid));
-    Serial.print(" : [");
-    Serial.print((char *)buffer_network_ssid);
-    Serial.println("]");
   }
 
   // try connecting to the wifi network
