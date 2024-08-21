@@ -28,8 +28,10 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 // canonical version number
 // 0.6: sent to PVUSD on 2021-04-01
 // 0.7: establish canonical version number, add DNS server, and version api
+// 0.71: fix forward/backward inversion settings
+// 0.72b: young robotics week version
 //
-#define VERSION "0.71"
+#define VERSION "0.72b"
 
 // activity messages go to the top line of the display
 void activity_update(const char *msg);
