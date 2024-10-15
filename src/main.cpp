@@ -847,9 +847,9 @@ void setup()
     status_update(ipStr.c_str());
 
     // start dnsServer
-    dnsServer.start(DNS_PORT, dnsDomain, myIP);
-    status_update("DNS Server Started");
-    status_update("local DN: ", dnsDomain);
+    // dnsServer.start(DNS_PORT, dnsDomain, myIP);
+    // status_update("DNS Server Started");
+    // status_update("local DN: ", dnsDomain);
 
   } else {
     ip_addr_str = WiFi.localIP().toString();
@@ -920,7 +920,7 @@ int last_value = 0;
 
 void loop()
 {
-  dnsServer.processNextRequest();  // Handle DNS requests
+  // dnsServer.processNextRequest();  // Handle DNS requests
   server.handleClient(); // close out any open/pending web transactions
   executePlan();         // returns immediately if there's no plan, loops there if there is a plan
 }

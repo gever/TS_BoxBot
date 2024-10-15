@@ -351,17 +351,17 @@ Blockly.JavaScript['boxbot_led'] = function(block) {
 };
 
 Blockly.JavaScript['boxbot_luminosity1'] = function(block) {
-  const code = 'await bbLogFetchValue("/luminosity1", "luminosity1")';
+  const code = 'await bbFetchValue("/luminosity1", "luminosity1")';
   return [code, Blockly.JavaScript.ORDER_AWAIT];
 };
 
 Blockly.JavaScript['boxbot_luminosity2'] = function(block) {
-  const code = 'await bbLogFetchValue("/luminosity2", "luminosity2")';
+  const code = 'await bbFetchValue("/luminosity2", "luminosity2")';
   return [code, Blockly.JavaScript.ORDER_AWAIT];
 };
 
 Blockly.JavaScript['boxbot_distance'] = function(block) {
-  const code = 'await bbLogFetchValue("/distance", "distance")';
+  const code = 'await bbFetchValue("/distance", "distance")';
   return [code, Blockly.JavaScript.ORDER_AWAIT];
 };
 
