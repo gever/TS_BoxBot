@@ -86,70 +86,93 @@ Stub running...
 Read 4096 bytes at 0x00008000 in 0.4 seconds (88.5 kbit/s)...
 Hard resetting via RTS pin...
 
-### Linux/WSL2 Notes
+### Linux
 
-You will also need to add udev rules for PlatformIO (see https://docs.platformio.org/en/latest/core/installation/udev-rules.html for more information). You can do this by running the following command in the Linux/WSL2 terminal:
+If you are not going to use VSCode you just need to install the PlatformIO CLI by following the instructions here: https://docs.platformio.org/en/latest/core/installation.html.
+
+If you are going to use VSCode then you need to also install the PlatformIO IDE extension for VSCode by following the instructions here: https://docs.platformio.org/en/latest/integration/ide/vscode.html#installation
+
+Add your user to the `dialout` group to access the USB serial port:
+
+```bash
+sudo usermod -a -G dialout $USER
+```
+
+The USB driver should load automatically and you should be able to see the USB device by running the following command in the terminal:
+
+```bash
+ls /dev/ttyUSB*
+```
+
+and you can see the device by running the following command in the terminal:
+
+```bash
+lsusb
+```
+
+which should show something like:
+
+```bash
+Bus 001 Device 004: ID 10c4:ea60 Silicon Labs CP210x UART Bridge
+```
+
+at this point you can use your favorite text editor to edit the code and then run the following commands to build and upload the code to the ESP32:
+
+```bash
+make
+make install
+```
+
+### WSL2 (Linux on Windows) Notes
+
+For WSL2 follow the Linux instructions above.
+
+You may also need to add udev rules for PlatformIO (see https://docs.platformio.org/en/latest/core/installation/udev-rules.html for more information). You can do this by running the following command in the Linux/WSL2 terminal:
 
 ```bash
  curl -fsSL https://raw.githubusercontent.com/platformio/platformio-core/develop/platformio/assets/system/99-platformio-udev.rules | sudo tee /etc/udev/rules.d/99-platformio-udev.rules
  sudo service udev restart
- ```
+ `Environment    Status    Duration
+-------------  --------  ------------
+esp32dev       SUCCESS   00:00:02.727``
 
- For WSL2 you will need to connect the usb device to the WSL2 instance. You can do this by following the instructions here:
+You will need to connect the usb device to the WSL2 instance. You can do this by following the instructions here:
 
 https://learn.microsoft.com/en-us/windows/wsl/connect-usb
 
 In powershell as Administrator run the following commands where `<busid>` is the busid of the USB device you want to connect to WSL2. You can find the busid by running `usbipd list`. The busid will be in the format `busid 1-1.1` where `1-1.1` is the busid. Run the following commands in powershell as Administrator to connect the USB device to WSL2:
 
 ```powershell
-wsl --shutdown
-wsl --update
 usbipd list
+```
+
+The output will include a line which looks something like:
+
+```powershell
+1-8    10c4:ea60  Silicon Labs CP210x USB to UART Bridge (COM3)                 Not shared
+```
+
+where 1-8 is the busid.
+
+You can then run the following commands in powershell as Administrator to connect the USB device to WSL2:
+
+```powershell
 usbipd bind --busid <busid>
 usbipd attach --wsl --busid <busid>
 ```
 
 Note: you will need to reattach the USB device to WSL2 every time you restart WSL2 or Windows wakes up.
 
-You can also use another project to auto-connect the USB device to WSL2: https://gitlab.com/alelec/wsl-usb-gui#wsl-usb-gui
-
-In Linux/WSL2 you will need to add your user to the `dialout` group to access the USB serial port. You can do this by running the following command in the WSL2 terminal:
-
-```bash
-sudo usermod -a -G dialout $USER
-```
-
-You can see if the USB port is available by typing in Linux/WSL2:
+You can see if the USB port is available by typing in a Linux/WSL2 terminal:
 
 ```bash
 lsusb
 ```
 
-You might need to:
-
-* Enable systemd by adding the following to `/etc/wsl.conf`:
+This should include a line like:
 
 ```bash
-[boot]
-systemd=true
-```
-
-* Restart WSL2 by running the following command in powershell as Administrator:
-
-```powershell
-wsl --shutdown
-```
-
-* Load the `usbserial` kernel module by running the following command in the WSL2 terminal:
-
-```bash
-sudo modprobe usbserial
-```
-
-* Load the `cp210x` kerel module by running the following command in the WSL2 terminal:
-
-```bash
-sudo modprobe cp210x
+Bus 001 Device 004: ID 10c4:ea60 Silicon Labs CP210x UART Bridge
 ```
 
 * Install linux-tools by running the following command in the Linux/WSL2 terminal:
