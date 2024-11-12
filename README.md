@@ -92,7 +92,7 @@ If you are not going to use VSCode you just need to install the PlatformIO CLI b
 
 If you are going to use VSCode then you need to also install the PlatformIO IDE extension for VSCode by following the instructions here: https://docs.platformio.org/en/latest/integration/ide/vscode.html#installation
 
-Add your user to the `dialout` group to access the USB serial port:
+You many need to add your user to the `dialout` group to access the USB serial port:
 
 ```bash
 sudo usermod -a -G dialout $USER
@@ -116,7 +116,7 @@ which should show something like:
 Bus 001 Device 004: ID 10c4:ea60 Silicon Labs CP210x UART Bridge
 ```
 
-at this point you can use your favorite text editor to edit the code and then run the following commands to build and upload the code to the ESP32:
+At this point you can use your favorite text editor to edit the code and then run the following commands to build and upload the code to the ESP32:
 
 ```bash
 make
@@ -132,13 +132,11 @@ You may also need to add udev rules for PlatformIO (see https://docs.platformio.
 ```bash
  curl -fsSL https://raw.githubusercontent.com/platformio/platformio-core/develop/platformio/assets/system/99-platformio-udev.rules | sudo tee /etc/udev/rules.d/99-platformio-udev.rules
  sudo service udev restart
- `Environment    Status    Duration
--------------  --------  ------------
-esp32dev       SUCCESS   00:00:02.727``
+```
 
-You will need to connect the usb device to the WSL2 instance. You can do this by following the instructions here:
+You will need to connect the USB device to the WSL2 instance. You can do this by following the instructions here:
 
-https://learn.microsoft.com/en-us/windows/wsl/connect-usb
+[USB connect instructions](https://learn.microsoft.com/en-us/windows/wsl/connect-usb)
 
 In powershell as Administrator run the following commands where `<busid>` is the busid of the USB device you want to connect to WSL2. You can find the busid by running `usbipd list`. The busid will be in the format `busid 1-1.1` where `1-1.1` is the busid. Run the following commands in powershell as Administrator to connect the USB device to WSL2:
 
@@ -175,23 +173,9 @@ This should include a line like:
 Bus 001 Device 004: ID 10c4:ea60 Silicon Labs CP210x UART Bridge
 ```
 
-* Install linux-tools by running the following command in the Linux/WSL2 terminal:
+At this point, just like with plain Linux above you can use your favorite text editor to edit the code and then build and upload the code:
 
 ```bash
-sudo apt-get install linux-tools-$(uname -r)
+make
+make install
 ```
-
-or the generic version:
-
-```bash
-sudo apt-get install linux-tools-generic
-```
-
-or the specific version e.g.:
-
-```bash
-sudo apt-get install linux-tools-5.15.0-125
-sudo apt-get install linux-tools-5.15.0-125-generic
-```
-
-
