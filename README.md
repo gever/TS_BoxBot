@@ -54,7 +54,7 @@ do all of the development steps from the command line as well - *we just haven't
 3. Restart VSCode
 4. Note: you will need to install git on your system to clone the repository.  You will have to restart VS code after you install git.
 5. Note: Do not use a remote repository to clone the project.  It will not work.  Clone the project to your local machine.  PlatformIO is incompatible with remote repositories.
-6. Note: you many have to install the USB driver: https://www.silabs.com/developer-tools/usb-to-uart-bridge-vcp-drivers?tab=downloads and the VCP driver: https://www.silabs.com/developer-tools/usb-to-uart-bridge-vcp-drivers?tab=downloads
+6. Note: you many have to install the USB driver: https://www.silabs.com/developer-tools/usb-to-uart-bridge-vcp-drivers?tab=downloads and the VCP driver: https://www.silabs.com/developer-tools/usb-to-uart-bridge-vcp-drivers?tab=downloads although modern operating systems should have the driver built in.
 7. Note: use the *black* USB cable that came with the robot.  The white cable is for charging only.
 
 ### Baking cookies
@@ -92,7 +92,7 @@ If you are not going to use VSCode you just need to install the PlatformIO CLI b
 
 If you are going to use VSCode then you need to also install the PlatformIO IDE extension for VSCode by following the instructions here: https://docs.platformio.org/en/latest/integration/ide/vscode.html#installation
 
-You many need to add your user to the `dialout` group to access the USB serial port:
+You should add your user to the `dialout` group to access the USB serial port:
 
 ```bash
 sudo usermod -a -G dialout $USER
