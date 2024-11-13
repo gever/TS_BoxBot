@@ -13,7 +13,6 @@
 // #include <mdns.h>
 
 #include "status.h"
-#include "util.h"
 #include "sensors.h"
 #include "servo.h"
 #include "led.h"
@@ -546,12 +545,10 @@ void handleGetVars() {
   server.send(200, "text/html", html);
 }
 
-void handleSetVar()
-{
+void handleSetVar() {
   // TODO: save current settings to SPIFFS/flash memory
   // TODO: save load current settings from SPIFFS
-  if (server.args())
-  {
+  if (server.args()) {
     if (server.argName(0) == "label") {
       String label;
       String value;
@@ -562,26 +559,9 @@ void handleSetVar()
       Serial.println("handleSetVar: " + label + " " + value);
 
       // find this var in settings table
-      for (int i = 0; i < sizeof(settings) / sizeof(setting_t); i++)
-      {
-        if (label == settings[i].label)
-        {
-          switch (settings[i].type)
-          {
-          case INT:
-            *settings[i].int_target = value.toInt();
-            break;
-          case FLOAT:
-            *settings[i].float_target = value.toFloat();
-            break;
-          case BOOL:
-            *settings[i].bool_target = value.toInt();
-            break;
-          case STRING:
-            memset(settings[i].string_target, 0, SETTINGS_STR_BUFFER_SIZE);
-            strcpy(settings[i].string_target, value.c_str());
-            break;
-          }
+      for (int i = 0; i < sizeof(settings) / sizeof(setting_t); i++) {
+        if (label == settings[i].label) {
+          set_setting(&settings[i], value);
           status_update("setvar", label.c_str(), value.c_str());
           break;
         }
@@ -595,14 +575,12 @@ void handleSetVar()
 
 
 // parse a string into a number
-int parse_int(char *str)
-{
+int parse_int(char *str) {
   int num = 0;
   int i = 0;
   if (str[i] == '-')
     i++;
-  while (str[i] >= '0' && str[i] <= '9')
-  {
+  while (str[i] >= '0' && str[i] <= '9') {
     num = num * 10 + str[i] - '0';
     i++;
   }
@@ -611,12 +589,9 @@ int parse_int(char *str)
   return num;
 }
 
-void handlePlan()
-{
-  if (server.args())
-  {
-    if (server.arg(0).length() > MAX_PLAN_LEN - 1)
-    {
+void handlePlan() {
+  if (server.args()) {
+    if (server.arg(0).length() > MAX_PLAN_LEN - 1) {
       Serial.println("ERR: Motion plan length exceeds buffer size - ignoring plan.");
       server.send(200, "application/json", "{\"status\":\"ACK\"}"); // TODO: send better return statuses
       return;
@@ -632,19 +607,16 @@ void handlePlan()
   }
 }
 
-void serveGenericPage(String url)
-{
+void serveGenericPage(String url) {
   Serial.print("handlePageRequest: " + url + " ");
-  if (!SPIFFS.exists(url))
-  {
+  if (!SPIFFS.exists(url)) {
     Serial.println("file does not exist:" + url);
     server.send(404, "text/plain", "file does not exist" + url);
     return;
   }
 
   File file = SPIFFS.open(url, "r");
-  if (!file)
-  {
+  if (!file) {
     Serial.println("file open failed" + url);
     server.send(404, "text/plain", "file open failed" + url);
     return;
@@ -676,21 +648,15 @@ void serveGenericPage(String url)
 void executePlan()
 {
   // only parse/setup next statement in the plan if we have finished the previous step
-  if (plan_ready && (step_count == 0))
-  {
+  if (plan_ready && (step_count == 0)) {
     int num = 0;
-    if (*plan_token == 'M')
-    {
+    if (*plan_token == 'M') {
       num = parse_int(++plan_token);
       setup_move(num < 0 ? BWD : FWD, num < 0 ? -num : num);
-    }
-    else if (*plan_token == 'T')
-    {
+    } else if (*plan_token == 'T') {
       num = parse_int(++plan_token);
       setup_turn(num < 0 ? 0 : 1, num < 0 ? -num : num);
-    }
-    else if (*plan_token == 'P')
-    {
+    } else if (*plan_token == 'P') {
       num = parse_int(++plan_token);
       // TODO: set_pen_position( num );
     }
@@ -717,8 +683,7 @@ void addAllFiles()
 {
   File root = SPIFFS.open("/");
   File file = root.openNextFile();
-  while (file)
-  {
+  while (file) {
     // Serial.print("  FILE: ");
     // Serial.println(file.name());
     server.on("/" + String(file.name()), handlePageRequest);
@@ -729,23 +694,20 @@ void addAllFiles()
 }
 
 // version API - plain text
-void handleVersion()
-{
+void handleVersion() {
   server.send(200, "text/plain", VERSION);
 }
 
 // we always fall back to AP mode if we can't connect to the network
 bool network_ap_mode = true;
 
-void setup()
-{
+void setup() {
   String ip_addr_str = "<not set>";
   bool spiffs_ok = false;
   uint8_t mac[8];
 
   Serial.begin(115200);
-  while (!Serial)
-  {
+  while (!Serial) {
     delay(10);
   } // wait for serial port to connect. Needed for native USB port only
   Serial.println("starting boxbot");
@@ -781,10 +743,8 @@ void setup()
   }
 
   // check the buffer_ap_ssid and replace the * with the last two bytes of the MAC address
-  for (int i = 0; i < strlen(buffer_ap_ssid); i++)
-  {
-    if (buffer_ap_ssid[i] == '*')
-    {
+  for (int i = 0; i < strlen(buffer_ap_ssid); i++) {
+    if (buffer_ap_ssid[i] == '*') {
       char temp_ap_ssid[32];
       buffer_ap_ssid[i] = 0;  // null terminate the string at the '*'
       sprintf(temp_ap_ssid, "%s%02X%02X", buffer_ap_ssid, mac[4] ^ mac[5], mac[2] ^ mac[3]);
@@ -916,10 +876,7 @@ void setup()
 }
 
 
-int last_value = 0;
-
-void loop()
-{
+void loop() {
   // dnsServer.processNextRequest();  // Handle DNS requests
   server.handleClient(); // close out any open/pending web transactions
   executePlan();         // returns immediately if there's no plan, loops there if there is a plan

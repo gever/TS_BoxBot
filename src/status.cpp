@@ -1,28 +1,31 @@
 #include <Wire.h>
 #include "status.h"
 
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
-bool license_plate_detected = false;
 
-bool license_plate_init()
-{
+// display current status or boot progress
+#define TEXT_LINES 6
+#define TEXT_DISPLAY_TOP 16   // where the text display starts (empirically determined)
+
+// bold yellow messages
+static bool first_activity = true;
+static bool license_plate_detected = false;
+static Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+static char status_buffer[TEXT_LINES][TEXT_LINE_LEN];
+
+bool license_plate_init() {
     // check to see if the OLED display is at I2C address 0x3C
     Wire.begin();
     Wire.beginTransmission(0x3C);
-    if (Wire.endTransmission() == 0)
-    {
+    if (Wire.endTransmission() == 0) {
         Serial.println("OLED found at 0x3C");
         license_plate_detected = true;
-    }
-    else
-    {
+    } else {
         Serial.println("OLED not found at 0x3C");
         license_plate_detected = false;
         return false;
     }
 
-    if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
-    {
+    if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
         Serial.println(F("SSD1306 allocation failed"));
         return false;
     }
@@ -35,14 +38,7 @@ bool license_plate_init()
     return true;
 }
 
-// display current status or boot progress
-#define TEXT_LINES 6
-#define TEXT_LINE_LEN 32
-#define TEXT_DISPLAY_TOP 16   // where the text display starts (empirically determined)
-
-// bold yellow messages
-bool first_activity = true;
-void activity_update(const char *msg) {
+void activity_update_message(const char *msg) {
   Serial.println(msg);
   if (!license_plate_detected) {
     return;
@@ -60,24 +56,9 @@ void activity_update(const char *msg) {
   display.setTextSize(1);
   display.display();
 }
-void activity_update(const char *msg1, const char *msg2) {
-  char buf[TEXT_LINE_LEN];
-  snprintf(buf, TEXT_LINE_LEN, "%s %s", msg1, msg2);
-  activity_update(buf);
-}
-void activity_update(const char *msg1, const char *msg2, const char *msg3) {
-  char buf[TEXT_LINE_LEN];
-  snprintf(buf, TEXT_LINE_LEN, "%s %s %s", msg1, msg2, msg3);
-  activity_update(buf);
-}
 
 // regular status messages
-char status_buffer[TEXT_LINES][TEXT_LINE_LEN];
-void status_init() {
-  memset(status_buffer, 0, sizeof(status_buffer));
-}
-void status_update(const char *msg)
-{
+void status_update_message(const char *msg) {
   Serial.println(msg);
   if (!license_plate_detected) {
     return;
@@ -94,18 +75,4 @@ void status_update(const char *msg)
     display.println(status_buffer[i]);
   }
   display.display();
-}
-
-void status_update(const char *msg1, const char *msg2)
-{
-  char buf[TEXT_LINE_LEN];
-  snprintf(buf, TEXT_LINE_LEN, "%s %s", msg1, msg2);
-  status_update(buf);
-}
-
-void status_update(const char *msg1, const char *msg2, const char *msg3)
-{
-  char buf[TEXT_LINE_LEN];
-  snprintf(buf, TEXT_LINE_LEN, "%s %s %s", msg1, msg2, msg3);
-  status_update(buf);
 }

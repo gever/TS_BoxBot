@@ -1,5 +1,4 @@
 #include "led.h"
-#include "main.h"
 #include "Arduino.h"
 
 void ledGo(int pin, bool status) {
