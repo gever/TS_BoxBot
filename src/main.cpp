@@ -10,7 +10,7 @@
 #include <FS.h>
 #include <SPIFFS.h>
 #include <DNSServer.h>
-// #include <mdns.h>
+#include <mdns.h>
 
 #include "status.h"
 #include "sensors.h"
@@ -756,6 +756,10 @@ void setup() {
   // try connecting to the wifi network
   if (use_wifi) {
     WiFi.mode(WIFI_STA);
+    WiFi.setHostname(buffer_ap_ssid);
+    // Disable WiFi power save for better responsiveness
+    WiFi.setSleep(false);
+    WiFi.setTxPower(WIFI_POWER_19_5dBm);
     WiFi.begin(buffer_network_ssid, buffer_network_password);
     status_update("Connecting to Network: ");
     status_update(buffer_network_ssid);
@@ -769,6 +773,10 @@ void setup() {
     if (WiFi.status() == WL_CONNECTED) {
       status_update(" --> yay!");
       network_ap_mode = false;
+      // Start mDNS, advertise botboxNNNN.local name
+      mdns_init();
+      mdns_hostname_set(buffer_ap_ssid);
+      mdns_service_add(NULL, "_http", "_tcp", 80, NULL, 0);
     } else {
       network_ap_mode = true;
       switch(WiFi.status()) {
@@ -814,11 +822,6 @@ void setup() {
   } else {
     ip_addr_str = WiFi.localIP().toString();
   }
-
-  // mdns_init();
-  // mdns_hostname_set(ssid);
-
-
 
   // dynamic pages
   status_update("Starting server");
