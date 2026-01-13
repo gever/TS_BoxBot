@@ -3,7 +3,7 @@ import time
 import sys
 
 # Configuration
-ROBOT_IP = "192.168.4.1" # Default Access Point IP. Change to actual IP if connected via WiFi.
+ROBOT_IP = "10.100.100.130" # Default Access Point IP. Change to actual IP if connected via WiFi.
 BASE_URL = f"http://{ROBOT_IP}"
 DEBUG = False
 
@@ -69,7 +69,7 @@ def main():
     
     # Side length in mm (or whatever unit the robot uses, likely cm or mm based on code)
     # create logical square: Move 4 times, Turn 4 times
-    side_length = 200 # assumption: 20cm or 200mm
+    side_length = 10 # assumption: 20cm or 200mm
     turn_angle = 90
     
     for i in range(4):
