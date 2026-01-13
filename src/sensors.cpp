@@ -75,7 +75,7 @@ int getDistance(void){
     delayMicroseconds(10);
     digitalWrite(pingPin, LOW);
     pinMode(echoPin, INPUT);
-    duration = pulseIn(echoPin, HIGH);
+    duration = pulseIn(echoPin, HIGH, 25000);
 
     // format value 
     // inches = (duration / 74 / 2);
