@@ -3,20 +3,21 @@
 */
 
 #include <Arduino.h>
-#include <WiFi.h>
-#include <WiFiClient.h>
-#include <WiFiAP.h>
-#include <WebServer.h>
+#include <ArduinoJson.h>
+#include <DNSServer.h>
 #include <FS.h>
 #include <SPIFFS.h>
-#include <DNSServer.h>
+#include <WebServer.h>
+#include <WebSocketsServer.h>
+#include <WiFi.h>
+#include <WiFiAP.h>
+#include <WiFiClient.h>
 #include <mdns.h>
 
-#include "status.h"
+#include "led.h"
 #include "sensors.h"
 #include "servo.h"
-#include "led.h"
-
+#include "status.h"
 
 //
 // canonical version number
@@ -24,17 +25,18 @@
 // 0.7: establish canonical version number, add DNS server, and version api
 // 0.71: fix forward/backward inversion settings
 // 0.72b: young robotics week version
-// 0.73: separate out status code, change default direction of motors 
+// 0.73: separate out status code, change default direction of motors
 #define VERSION "0.73"
 
-#define SDEBUG(label, x) \
-  {                      \
-    Serial.print(label); \
-    Serial.println(x);   \
+#define SDEBUG(label, x)                                                       \
+  {                                                                            \
+    Serial.print(label);                                                       \
+    Serial.println(x);                                                         \
   }
 #define ABS(x) ((x < 0) ? (-x) : (x))
 
 WebServer server(80);
+WebSocketsServer webSocket = WebSocketsServer(81);
 
 // add the variables to the settings table
 #include "settings.h"
@@ -54,8 +56,9 @@ hw_timer_t *step_timer = NULL;
 const byte DNS_PORT = 53;
 DNSServer dnsServer;
 
-// domain name for the DNS server, can't use .local conflicts with multicast DNS (mDNS) or Bonjour services
-const char *dnsDomain = "boxbot.home";  
+// domain name for the DNS server, can't use .local conflicts with multicast DNS
+// (mDNS) or Bonjour services
+const char *dnsDomain = "boxbot.home";
 
 const bool FWD = true;  // forward in terms of the boxbot, not motor
 const bool BWD = false; // backward in terms of the boxbot, not motor
@@ -64,16 +67,15 @@ const bool RGT = false; // right in terms of the boxbot, not motor
 #define CW 1
 #define CCW 0
 #define DW(p, v) digitalWrite(p, v)
-#define SET_BITS(a, b, c, d) \
-  {                          \
-    DW(pin1, a);             \
-    DW(pin2, b);             \
-    DW(pin3, c);             \
-    DW(pin4, d);             \
+#define SET_BITS(a, b, c, d)                                                   \
+  {                                                                            \
+    DW(pin1, a);                                                               \
+    DW(pin2, b);                                                               \
+    DW(pin3, c);                                                               \
+    DW(pin4, d);                                                               \
   }
 
-class MarsStepper
-{
+class MarsStepper {
 private:
   bool enabled;
   bool dir;
@@ -83,9 +85,8 @@ private:
 
 public:
   unsigned int current_step;
-  MarsStepper(int motor_pin_1, int motor_pin_2,
-              int motor_pin_3, int motor_pin_4)
-  {
+  MarsStepper(int motor_pin_1, int motor_pin_2, int motor_pin_3,
+              int motor_pin_4) {
     pin1 = motor_pin_1;
     pin2 = motor_pin_2;
     pin3 = motor_pin_3;
@@ -104,30 +105,21 @@ public:
     dir = CW;
   }
 
-  void set_direction(bool d)
-  {
+  void set_direction(bool d) {
     // SDEBUG("set_direction = ", d);
     dir = d;
   }
 
-  void enable()
-  {
-    enabled = true;
-  }
-  
-  void disable()
-  {
+  void enable() { enabled = true; }
+
+  void disable() {
     enabled = false;
     SET_BITS(0, 0, 0, 0);
   }
 
-  void set_divisor(unsigned int v)
-  {
-    divisor = v;
-  }
-  
-  void step()
-  {
+  void set_divisor(unsigned int v) { divisor = v; }
+
+  void step() {
     // always increment the counter
     step_counter++;
 
@@ -140,8 +132,7 @@ public:
       return;
 
     // step! (activate the next set of stators)
-    switch (current_step % 8)
-    {
+    switch (current_step % 8) {
     case 0:
       SET_BITS(1, 0, 0, 0);
       break;
@@ -175,19 +166,22 @@ public:
 MarsStepper motor_rt(13, 14, 27, 26); // right
 MarsStepper motor_lt(15, 2, 4, 19);   // left
 
-const float rot_steps = 2038 * 2;                                                   // one full rotation of the motor shaft
-const float boxbot_body_rad = 125/2.0f;                                             // the distance from the pen to the wheel in mm
-const float boxbot_turn_circ = PI * 2.0 * boxbot_body_rad;                          // circumference of circle described by the wheels
-const float boxbot_wheel_rad = 25;                                                  // in mm
-const float boxbot_wheel_circ = PI * 2.0 * boxbot_wheel_rad;                        // circumference of the wheel in mm
-const float boxbot_turn_steps = (boxbot_turn_circ / boxbot_wheel_circ) * rot_steps; // number of steps to turn 360 deg
-const float boxbot_steps_mm = rot_steps / boxbot_wheel_circ;                        // steps per mm of linear motion
+const float rot_steps = 2038 * 2; // one full rotation of the motor shaft
+const float boxbot_body_rad =
+    125 / 2.0f; // the distance from the pen to the wheel in mm
+const float boxbot_turn_circ =
+    PI * 2.0 *
+    boxbot_body_rad; // circumference of circle described by the wheels
+const float boxbot_wheel_rad = 25; // in mm
+const float boxbot_wheel_circ =
+    PI * 2.0 * boxbot_wheel_rad; // circumference of the wheel in mm
+const float boxbot_turn_steps = (boxbot_turn_circ / boxbot_wheel_circ) *
+                                rot_steps; // number of steps to turn 360 deg
+const float boxbot_steps_mm =
+    rot_steps / boxbot_wheel_circ; // steps per mm of linear motion
 
 void step_the_motors();
-void IRAM_ATTR onTimer()
-{
-  step_the_motors();
-}
+void IRAM_ATTR onTimer() { step_the_motors(); }
 
 int step_count = 0; // for the current motion, for all active motors
 
@@ -195,31 +189,27 @@ int step_count = 0; // for the current motion, for all active motors
     setup a stop!
 */
 
-void setup_stop(){
+void setup_stop() {
   motor_lt.disable();
   motor_rt.disable();
 }
-
 
 /*
    set up a move command
    dir  - fwd=1, bwd=0
    dist - in centimeters
 */
-void setup_move(boolean dir, int dist)
-{
+void setup_move(boolean dir, int dist) {
   // SDEBUG("setup_move\ndir = ", dir);
   // SDEBUG("dist = ", dist);
-  if (invert_direction) dir = !dir;
+  if (invert_direction)
+    dir = !dir;
   step_count = (dist * 10) * boxbot_steps_mm * linear_motion_fudge;
-  if (dir)
-  {
+  if (dir) {
     // SDEBUG("FWD:", dir);
     motor_rt.set_direction(CCW);
     motor_lt.set_direction(CW);
-  }
-  else
-  {
+  } else {
     // SDEBUG("BWD:", dir);
     motor_rt.set_direction(CW);
     motor_lt.set_direction(CCW);
@@ -234,17 +224,15 @@ void setup_move(boolean dir, int dist)
 /*
    set up a turn command
 */
-void setup_turn(bool dir, int angle)
-{
-  if (invert_turn) dir = !dir;
-  step_count = boxbot_turn_steps * (((float)angle) / 360.0f) * linear_turn_fudge;
-  if (dir)
-  {
+void setup_turn(bool dir, int angle) {
+  if (invert_turn)
+    dir = !dir;
+  step_count =
+      boxbot_turn_steps * (((float)angle) / 360.0f) * linear_turn_fudge;
+  if (dir) {
     motor_rt.set_direction(CCW);
     motor_lt.set_direction(CCW);
-  }
-  else
-  {
+  } else {
     motor_rt.set_direction(CW);
     motor_lt.set_direction(CW);
   }
@@ -255,32 +243,28 @@ void setup_turn(bool dir, int angle)
   // timerAttachInterrupt(step_timer, &onTimer, true);
 }
 
-void step_the_motors()
-{
-  if (step_count)
-  {
+void step_the_motors() {
+  if (step_count) {
     step_count--;
 
     motor_rt.step();
     motor_lt.step();
 
-    if (step_count == 0)
-    {
+    if (step_count == 0) {
       // save power, turn off the motors when not moving
       motor_rt.disable();
       motor_lt.disable();
-      // TODO: evaluate possibility of turning off the interrupts while idle (might save power)
+      // TODO: evaluate possibility of turning off the interrupts while idle
+      // (might save power)
     }
   }
 }
 
 // configure the interrupt timer
-void setup_timer()
-{
+void setup_timer() {
   // pretty good tutorial on interrupt timers:
   // https://iotespresso.com/timer-interrupts-with-esp32/
-  if (step_timer == NULL)
-  {
+  if (step_timer == NULL) {
     step_timer = timerBegin(0, 80, true); // configured for 1MHZ (1,000,000/sec)
   }
   timerAttachInterrupt(step_timer, &onTimer, true);
@@ -288,8 +272,7 @@ void setup_timer()
   timerAlarmEnable(step_timer);
 }
 
-void handleNotFound()
-{
+void handleNotFound() {
   String message = "File Not Found\n\n";
   message += "URI: ";
   message += server.uri();
@@ -298,8 +281,7 @@ void handleNotFound()
   message += "\nArguments: ";
   message += server.args();
   message += "\n";
-  for (uint8_t i = 0; i < server.args(); i++)
-  {
+  for (uint8_t i = 0; i < server.args(); i++) {
     message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
   }
 
@@ -309,8 +291,7 @@ void handleNotFound()
 // CONSIDER: right now you can interrupt the active movement by
 //           sending a new movement command
 
-void handleMove()
-{
+void handleMove() {
   unsigned long startTime = millis();
   unsigned long setupTime = 0;
 
@@ -327,7 +308,8 @@ void handleMove()
       activity_update("FWD", String(v).c_str());
     }
   } else {
-    server.send(400, "application/json", "{\"status\":\"Error: No arguments provided\"}");
+    server.send(400, "application/json",
+                "{\"status\":\"Error: No arguments provided\"}");
     return;
   }
 
@@ -342,13 +324,11 @@ void handleMove()
   Serial.println(" ms");
 }
 
-void handleTurn()
-{
+void handleTurn() {
   unsigned long startTime = millis();
   unsigned long setupTime = 0;
 
-  if (server.args())
-  {
+  if (server.args()) {
     int v = server.arg(0).toInt();
     unsigned long cmdStartTime = millis();
     setup_turn(v < 0 ? 1 : 0, ABS(v)); // negative for left turns
@@ -361,7 +341,8 @@ void handleTurn()
       activity_update("RGT", String(v).c_str());
     }
   } else {
-    server.send(400, "application/json", "{\"status\":\"Error: No arguments provided\"}");
+    server.send(400, "application/json",
+                "{\"status\":\"Error: No arguments provided\"}");
     return;
   }
   server.send(200, "application/json", "{\"status\":\"ACK\"}");
@@ -375,8 +356,7 @@ void handleTurn()
   Serial.println(" ms");
 }
 
-void handleStop()
-{
+void handleStop() {
   motor_rt.disable();
   motor_lt.disable();
   step_count = 0;
@@ -400,8 +380,7 @@ void handleBusy() {
  */
 #define JSON_BUFFER_SIZE 128
 
-void handleLuminosity1()
-{
+void handleLuminosity1() {
   char jsonBuffer[JSON_BUFFER_SIZE];
   int v = getLuminosity1();
   snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"luminosity1\":%d}", v);
@@ -409,8 +388,7 @@ void handleLuminosity1()
   server.send(200, "application/json", jsonBuffer);
 }
 
-void handleLuminosity2()
-{
+void handleLuminosity2() {
   char jsonBuffer[JSON_BUFFER_SIZE];
   int v = getLuminosity2();
   snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"luminosity2\":%d}", v);
@@ -418,9 +396,7 @@ void handleLuminosity2()
   server.send(200, "application/json", jsonBuffer);
 }
 
-
-void handleDistance()
-{
+void handleDistance() {
   char jsonBuffer[JSON_BUFFER_SIZE];
   int v = getDistance();
   Serial.print(v);
@@ -429,8 +405,7 @@ void handleDistance()
   server.send(200, "application/json", jsonBuffer);
 }
 
-void handleAccel_x()
-{
+void handleAccel_x() {
   char jsonBuffer[JSON_BUFFER_SIZE];
   /*
   float v = getAccel_x();
@@ -442,8 +417,7 @@ void handleAccel_x()
   server.send(200, "application/json", jsonBuffer);
 }
 
-void handleAccel_y()
-{
+void handleAccel_y() {
   char jsonBuffer[JSON_BUFFER_SIZE];
   /*
   float v = getAccel_y();
@@ -455,8 +429,7 @@ void handleAccel_y()
   server.send(200, "application/json", jsonBuffer);
 }
 
-void handleAccel_z()
-{
+void handleAccel_z() {
   char jsonBuffer[JSON_BUFFER_SIZE];
   /*
   float v = getAccel_z();
@@ -468,66 +441,57 @@ void handleAccel_z()
   server.send(200, "application/json", jsonBuffer);
 }
 
-
-void handleServoGo()
-{
-  if (server.args())
-  {
-    int servoID = server.arg(0).toInt(); // pin
+void handleServoGo() {
+  if (server.args()) {
+    int servoID = server.arg(0).toInt();    // pin
     int servoAngle = server.arg(1).toInt(); // angle
     servoGo(servoID, servoAngle);
-    switch(servoID) {
-      case 1:
-        activity_update("SRVO1", String(servoAngle).c_str());
-        break;
-      case 2:
-        activity_update("SRVO2", String(servoAngle).c_str());
-        break;
-      case 3:
-        activity_update("SRVO3", String(servoAngle).c_str());
-        break;
-      case 4:
-        activity_update("SRVO4", String(servoAngle).c_str());
-        break;
+    switch (servoID) {
+    case 1:
+      activity_update("SRVO1", String(servoAngle).c_str());
+      break;
+    case 2:
+      activity_update("SRVO2", String(servoAngle).c_str());
+      break;
+    case 3:
+      activity_update("SRVO3", String(servoAngle).c_str());
+      break;
+    case 4:
+      activity_update("SRVO4", String(servoAngle).c_str());
+      break;
     }
   }
   server.send(200, "application/json", "{\"status\":\"ACK\"}");
 }
 
 // TODO: deprecate
-void handleServoInit()
-{
-  if (server.args())
-  {
+void handleServoInit() {
+  if (server.args()) {
     int servoPin = server.arg(0).toInt(); // pin
-    
   }
   server.send(200, "application/json", "{\"status\":\"ACK\"}");
 }
 
-void handleLED()
-{
-  if (server.args())
-  {
-    int pin = server.arg(0).toInt(); // pin
+void handleLED() {
+  if (server.args()) {
+    int pin = server.arg(0).toInt();     // pin
     bool status = server.arg(1).toInt(); // status
     ledGo(pin, status);
     activity_update("LED", String(pin).c_str(), String(status).c_str());
   }
-  server.send(200, "application/json", "{\"status\":\"ACK\"}"); 
+  server.send(200, "application/json", "{\"status\":\"ACK\"}");
 }
 
-void handleDetectLine()
-{
+void handleDetectLine() {
   char jsonBuffer[JSON_BUFFER_SIZE];
-  bool v = detectLine(4095);  // 4095 is for a dark black line on white background
+  bool v =
+      detectLine(4095); // 4095 is for a dark black line on white background
   snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"line?\":%s}", v);
   activity_update("LINE", v ? "true" : "false");
   server.send(200, "application/json", jsonBuffer);
 }
 
-void handleTemperature()
-{
+void handleTemperature() {
   char jsonBuffer[JSON_BUFFER_SIZE];
   int v = getTemperature();
   snprintf(jsonBuffer, JSON_BUFFER_SIZE, "{\"temperature\":%d}", v);
@@ -573,7 +537,6 @@ void handleSetVar() {
   }
 }
 
-
 // parse a string into a number
 int parse_int(char *str) {
   int num = 0;
@@ -592,15 +555,18 @@ int parse_int(char *str) {
 void handlePlan() {
   if (server.args()) {
     if (server.arg(0).length() > MAX_PLAN_LEN - 1) {
-      Serial.println("ERR: Motion plan length exceeds buffer size - ignoring plan.");
-      server.send(200, "application/json", "{\"status\":\"ACK\"}"); // TODO: send better return statuses
+      Serial.println(
+          "ERR: Motion plan length exceeds buffer size - ignoring plan.");
+      server.send(200, "application/json",
+                  "{\"status\":\"ACK\"}"); // TODO: send better return statuses
       return;
     }
 
-    server.send(200, "application/json", "{\"status\":\"ACK\"}"); // TODO: send better return statuses
+    server.send(200, "application/json",
+                "{\"status\":\"ACK\"}"); // TODO: send better return statuses
 
     strcpy(plan_buffer, server.arg(0).c_str());
-    plan = plan_buffer;               // point it back at the front of the buffer
+    plan = plan_buffer; // point it back at the front of the buffer
     plan_token = strtok(plan, delim); // get the first token
     plan_ready = true;
     activity_update("PLAN", "loaded");
@@ -645,9 +611,9 @@ void serveGenericPage(String url) {
   file.close();
 }
 
-void executePlan()
-{
-  // only parse/setup next statement in the plan if we have finished the previous step
+void executePlan() {
+  // only parse/setup next statement in the plan if we have finished the
+  // previous step
   if (plan_ready && (step_count == 0)) {
     int num = 0;
     if (*plan_token == 'M') {
@@ -662,8 +628,7 @@ void executePlan()
     }
 
     plan_token = strtok(NULL, delim); // set up the next bit of code to execute
-    if (plan_token == NULL)
-    { // finished the script
+    if (plan_token == NULL) {         // finished the script
       Serial.println("executePlan: end");
       plan_ready = false;
     }
@@ -671,16 +636,14 @@ void executePlan()
 }
 
 // handle request for static page content from the SPIFFS filesystem
-void handlePageRequest()
-{
+void handlePageRequest() {
   String url = server.uri();
   if (url == "/")
     url = "/index.html";
   serveGenericPage(url);
 }
 
-void addAllFiles()
-{
+void addAllFiles() {
   File root = SPIFFS.open("/");
   File file = root.openNextFile();
   while (file) {
@@ -694,12 +657,57 @@ void addAllFiles()
 }
 
 // version API - plain text
-void handleVersion() {
-  server.send(200, "text/plain", VERSION);
-}
+void handleVersion() { server.send(200, "text/plain", VERSION); }
 
 // we always fall back to AP mode if we can't connect to the network
 bool network_ap_mode = true;
+
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t *payload,
+                    size_t length) {
+  if (type == WStype_DISCONNECTED) {
+    Serial.printf("[%u] Disconnected!\n", num);
+  } else if (type == WStype_CONNECTED) {
+    IPAddress ip = webSocket.remoteIP(num);
+    Serial.printf("[%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[0],
+                  ip[1], ip[2], ip[3], payload);
+  } else if (type == WStype_TEXT) {
+    Serial.printf("[%u] get Text: %s\n", num, payload);
+    StaticJsonDocument<200> doc;
+    DeserializationError error = deserializeJson(doc, payload);
+    if (error) {
+      Serial.print(F("deserializeJson() failed: "));
+      Serial.println(error.f_str());
+      return;
+    }
+    const char *cmd = doc["cmd"];
+    if (strcmp(cmd, "move") == 0) {
+      int val = doc["val"];
+      setup_move(val < 0 ? BWD : FWD, ABS(val));
+      activity_update(val < 0 ? "BWD" : "FWD", String(ABS(val)).c_str());
+      webSocket.sendTXT(num, "{\"status\":\"ACK\"}");
+    } else if (strcmp(cmd, "turn") == 0) {
+      int val = doc["val"];
+      setup_turn(val < 0 ? LFT : RGT, ABS(val));
+      activity_update(val < 0 ? "LFT" : "RGT", String(ABS(val)).c_str());
+      webSocket.sendTXT(num, "{\"status\":\"ACK\"}");
+    } else if (strcmp(cmd, "distance") == 0) {
+      int v = getDistance();
+      char msg[64];
+      snprintf(msg, sizeof(msg), "{\"distance\":%d}", v);
+      webSocket.sendTXT(num, msg);
+      activity_update("DIST", String(v).c_str());
+    } else if (strcmp(cmd, "busy") == 0) {
+      char msg[64];
+      snprintf(msg, sizeof(msg), "{\"busy\":%s}",
+               step_count > 0 ? "true" : "false");
+      webSocket.sendTXT(num, msg);
+    } else if (strcmp(cmd, "stop") == 0) {
+      setup_stop();
+      webSocket.sendTXT(num, "{\"status\":\"ACK\"}");
+      activity_update("STOP");
+    }
+  }
+}
 
 void setup() {
   String ip_addr_str = "<not set>";
@@ -713,7 +721,7 @@ void setup() {
   Serial.println("starting boxbot");
   license_plate_init();
   activity_update("Hello!");
-	status_update("boxbot - start");
+  status_update("boxbot - start");
 
   // get the MAC address
   esp_read_mac(mac, ESP_MAC_WIFI_STA);
@@ -742,12 +750,14 @@ void setup() {
     load_settings();
   }
 
-  // check the buffer_ap_ssid and replace the * with the last two bytes of the MAC address
+  // check the buffer_ap_ssid and replace the * with the last two bytes of the
+  // MAC address
   for (int i = 0; i < strlen(buffer_ap_ssid); i++) {
     if (buffer_ap_ssid[i] == '*') {
       char temp_ap_ssid[32];
-      buffer_ap_ssid[i] = 0;  // null terminate the string at the '*'
-      sprintf(temp_ap_ssid, "%s%02X%02X", buffer_ap_ssid, mac[4] ^ mac[5], mac[2] ^ mac[3]);
+      buffer_ap_ssid[i] = 0; // null terminate the string at the '*'
+      sprintf(temp_ap_ssid, "%s%02X%02X", buffer_ap_ssid, mac[4] ^ mac[5],
+              mac[2] ^ mac[3]);
       strcpy(buffer_ap_ssid, temp_ap_ssid);
       break;
     }
@@ -763,7 +773,7 @@ void setup() {
     WiFi.begin(buffer_network_ssid, buffer_network_password);
     status_update("Connecting to Network: ");
     status_update(buffer_network_ssid);
-    for(int i=0; i<20; i++) { // wait up to 10 seconds for wifi to connect
+    for (int i = 0; i < 20; i++) { // wait up to 10 seconds for wifi to connect
       if (WiFi.status() == WL_CONNECTED) {
         break;
       }
@@ -779,25 +789,25 @@ void setup() {
       mdns_service_add(NULL, "_http", "_tcp", 80, NULL, 0);
     } else {
       network_ap_mode = true;
-      switch(WiFi.status()) {
-        case WL_NO_SSID_AVAIL:
-          status_update("ERR: no SSID available");
-          break;
-        case WL_CONNECT_FAILED:
-          status_update("ERR: connection failed");
-          break;
-        case WL_IDLE_STATUS:
-          status_update("ERR: idle status");
-          break;
-        case WL_DISCONNECTED:
-          status_update("ERR: disconnected");
-          break;
-        case WL_NO_SHIELD:
-          status_update("ERR: no shield");
-          break;
-        default:
-          status_update("ERR: unknown error");
-          break;
+      switch (WiFi.status()) {
+      case WL_NO_SSID_AVAIL:
+        status_update("ERR: no SSID available");
+        break;
+      case WL_CONNECT_FAILED:
+        status_update("ERR: connection failed");
+        break;
+      case WL_IDLE_STATUS:
+        status_update("ERR: idle status");
+        break;
+      case WL_DISCONNECTED:
+        status_update("ERR: disconnected");
+        break;
+      case WL_NO_SHIELD:
+        status_update("ERR: no shield");
+        break;
+      default:
+        status_update("ERR: unknown error");
+        break;
       }
     }
   }
@@ -825,25 +835,28 @@ void setup() {
 
   // dynamic pages
   status_update("Starting server");
-  server.on("/move", handleMove);      // immediate move
-  server.on("/turn", handleTurn);      // immediate turn
-  server.on("/stop", handleStop);      // immediate stop (of everything)
-  server.on("/plan", handlePlan);      // run multiple commands (BUCL script)
-  server.on("/busy", handleBusy);      // run multiple commands (BUCL script)
+  server.on("/move", handleMove); // immediate move
+  server.on("/turn", handleTurn); // immediate turn
+  server.on("/stop", handleStop); // immediate stop (of everything)
+  server.on("/plan", handlePlan); // run multiple commands (BUCL script)
+  server.on("/busy", handleBusy); // run multiple commands (BUCL script)
   server.on("/luminosity1", handleLuminosity1); // get luminosity
   server.on("/luminosity2", handleLuminosity2); // get luminosity
-  server.on("/distance", handleDistance); // get distance
-  server.on("/accel-x", handleAccel_x); // accelerometer x axis
-  server.on("/accel-y", handleAccel_y); // accelerometer y axis
-  server.on("/accel-z", handleAccel_z); // accelerometer z axis
-  server.on("/servoGo", handleServoGo); // move servo!
-  server.on("/servoInit", handleServoInit); // move servo!
-  server.on("/led", handleLED); // led 
+  server.on("/distance", handleDistance);       // get distance
+  server.on("/accel-x", handleAccel_x);         // accelerometer x axis
+  server.on("/accel-y", handleAccel_y);         // accelerometer y axis
+  server.on("/accel-z", handleAccel_z);         // accelerometer z axis
+  server.on("/servoGo", handleServoGo);         // move servo!
+  server.on("/servoInit", handleServoInit);     // move servo!
+  server.on("/led", handleLED);                 // led
   server.on("/setvar", handleSetVar);
   server.on("/getvars", handleGetVars);
   server.on("/version", handleVersion);
   server.onNotFound(handleNotFound); // generic page handler
   server.begin();
+
+  webSocket.begin();
+  webSocket.onEvent(webSocketEvent);
 
   // set up the motor step timer
   status_update("Initialize motors");
@@ -878,9 +891,10 @@ void setup() {
   status_update("boxbot", VERSION, "ready");
 }
 
-
 void loop() {
+  webSocket.loop();
   // dnsServer.processNextRequest();  // Handle DNS requests
   server.handleClient(); // close out any open/pending web transactions
-  executePlan();         // returns immediately if there's no plan, loops there if there is a plan
+  executePlan(); // returns immediately if there's no plan, loops there if there
+                 // is a plan
 }
