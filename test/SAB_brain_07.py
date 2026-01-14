@@ -25,21 +25,24 @@ t.shape("triangle")
 t.color("lime") # Radar green
 t.pencolor("lime")
 
-def draw_wedge(angle, distance):
+def draw_wedge(angle, distance, override_color=None):
     """Draws a filled triangle representing the distance at a specific angle."""
     
     if distance == -1:
         fill_color = "orange"
         draw_dist = 200 # Fixed size for error readings
     elif distance > 0:
-        fill_color = "dark green"
+        fill_color = "darkgreen"
         draw_dist = distance * 2 # Scale: 1cm = 2 pixels
     else:
         return # Should not happen based on current logic but good safety
 
     t.setheading(90 - angle) # Center axis of the wedge
     
-    t.fillcolor(fill_color)
+    if override_color:
+        t.fillcolor(override_color)
+    else:
+        t.fillcolor(fill_color)
     t.begin_fill()
     t.penup()
     t.goto(0, 0)
@@ -115,11 +118,44 @@ async def wait_until_idle(websocket):
 
 async def get_distance(websocket):
     # Check Distance
-    log("Checking distance...")
-    resp = await send_command(websocket, "distance")
-    dist = resp.get("distance", -1)
-    log(f" {dist}cm")
-    return dist
+    # Take 5 samples, throw out high/low, average the rest
+    samples = []
+    log("Checking distance...", end="")
+    
+    for _ in range(5):
+        try:
+            resp = await send_command(websocket, "distance")
+            dist = resp.get("distance", -1)
+            if dist != -1:
+                samples.append(dist)
+        except Exception as e:
+            log(f"Err: {e}")
+        
+        # Small delay between pinging to let sensor reset if needed
+        await asyncio.sleep(0.2)
+    
+    # Filter and average
+    final_dist = -1
+    
+    if not samples:
+        log(" No valid readings.")
+        return -1
+        
+    if len(samples) < 3:
+        # Just average what we have
+        final_dist = sum(samples) / len(samples)
+    else:
+        # Sort, remove min and max
+        samples.sort()
+        # Remove smallest
+        samples.pop(0)
+        # Remove largest
+        samples.pop()
+        
+        final_dist = sum(samples) / len(samples)
+
+    log(f" Samples: {samples} -> Avg: {final_dist:.1f}cm")
+    return final_dist
 
 
 async def scan(websocket):
@@ -148,31 +184,41 @@ async def scan(websocket):
 async def main():
     print(f"Starting Socket Dance on {URI}...")
     
-    try:
-        async with websockets.connect(URI) as websocket:
-            print("Connected!")
-            
-            while True:
-                readings = await scan(websocket)
-            
-                # Find the path with the most room
-                if readings:
-                    farthest = max(readings)
-                    target_idx = readings.index(farthest)
-                    target_angle = target_idx * SCAN_ANGLE
-                    
-                    print(f"Moving toward clear path: {farthest}cm at {target_angle}°")
-                    
-                    # Turn to face the path and move
-                    # Note: The robot already finished a 360, so we turn relative to 'front'
-                    await send_command(websocket, "turn", target_angle)
-                    await wait_until_idle(websocket)
-                    await send_command(websocket, "move", min(farthest / 2, 40))
-                    await wait_until_idle(websocket)
+    while True:
+        try:
+            async with websockets.connect(URI) as websocket:
+                print("Connected!")
+                
+                while True:
+                    readings = await scan(websocket)
+                
+                    # Find the path with the most room
+                    if readings:
+                        farthest = max(readings)
+                        target_idx = readings.index(farthest)
+                        target_angle = target_idx * SCAN_ANGLE
+                        
+                        print(f"Moving toward clear path: {farthest}cm at {target_angle}°")
+                        
+                        # Highlight the chosen path
+                        draw_wedge(target_angle, farthest, override_color="red")
+                        
+                        
+                        # Turn to face the path and move
+                        # Note: The robot already finished a 360, so we turn relative to 'front'
+                        await send_command(websocket, "turn", target_angle)
+                        await wait_until_idle(websocket)
+                        await send_command(websocket, "move", min(farthest / 2, 40))
+                        await wait_until_idle(websocket)
 
-    except Exception as e:
-        print(f"Connection failed: {e}")
-        traceback.print_exc()
+        except (websockets.exceptions.ConnectionClosedError, ConnectionResetError, OSError) as e:
+            print(f"Connection lost: {e}")
+            print("Reconnecting in 2 seconds...")
+            await asyncio.sleep(2)
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+            traceback.print_exc()
+            await asyncio.sleep(2)
 
 if __name__ == "__main__":
     asyncio.run(main())
