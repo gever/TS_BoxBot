@@ -56,6 +56,31 @@ The robot exposes a simple HTTP API. Commands are sent as GET requests. Most com
 | `/servoGo` | `pin` (int), `angle` (int) | Move servo at `pin` to `angle`. |
 | `/led` | `pin` (int), `status` (0/1) | Turn LED on/off. |
 
+
+## WebSocket API Reference
+
+The robot also supports a persistent WebSocket connection on port 81.
+
+**URI**: `ws://<ROBOT_IP>:81/`
+
+Commands are sent as JSON strings.
+
+### Request Format
+```json
+{
+    "cmd": "command_name",
+    "val": 123
+}
+```
+- `cmd`: The command name (e.g., "move", "turn").
+- `val`: (Optional) The parameter value.
+
+### Supported Commands
+- `move`: Move forward/backward. `val` = distance in cm.
+- `turn`: Turn. `val` = angle in degrees.
+- `distance`: Get ultrasonic distance.
+- `busy`: Check if robot is moving.
+
 ## Python Usage Examples
 
 ### Prerequisites
@@ -96,4 +121,6 @@ print(f"Distance: {dist_response['distance']} cm")
 
 ### Motion Plan Example
 
-See `src/square_dance.py` for a complete example of running a coordinated movement pattern.
+See `src/square_dance.py` for a complete example of running a coordinated movement pattern using the REST API.
+
+See `src/socket_dance.py` for an example using the WebSocket API.
