@@ -17,7 +17,7 @@ SCAN_ANGLE = 360/20
 screen = turtle.Screen()
 screen.title("Robot LiDAR Scan Visualization")
 screen.bgcolor("black")
-screen.setup(width=600, height=600)
+screen.setup(width=1200, height=1200)
 
 t = turtle.Turtle()
 t.speed(0) # Fastest drawing speed
@@ -81,6 +81,51 @@ def draw_wedge(angle, distance, override_color=None):
     t.goto(0,0)
     
     t.end_fill()
+
+def draw_relative_wedge(distance, color="darkgreen"):
+    """Draws a wedge relative to the turtle's current position and heading."""
+    if distance == -1:
+        color = "orange"
+        draw_dist = 200
+    elif distance > 0:
+        draw_dist = distance * 2
+    else:
+        return
+
+    # Remember where we are
+    start_pos = t.pos()
+    start_heading = t.heading()
+
+    t.fillcolor(color)
+    t.begin_fill()
+    t.pendown()
+    
+    # 1. Go to Right Point
+    t.left(SCAN_ANGLE / 2) # Turn to right edge (relative to center axis) - wait, turtle 0 is East. 
+                           # If we assume turtle is facing the scan direction:
+                           # Left edge is +angle/2, Right edge is -angle/2
+    t.forward(draw_dist)
+    left_pos = t.pos()
+    
+    # 2. Go to Right Point
+    t.penup()
+    t.goto(start_pos)
+    t.setheading(start_heading)
+    t.right(SCAN_ANGLE / 2)
+    t.pendown()
+    t.forward(draw_dist)
+    right_pos = t.pos()
+
+    # 3. Connect them
+    t.goto(left_pos)
+    t.goto(start_pos)
+    
+    t.end_fill()
+    
+    # Restore state
+    t.penup()
+    t.setheading(start_heading)
+    t.goto(start_pos)
 
 
 def log(msg, end="\n"):
@@ -161,7 +206,7 @@ async def get_distance(websocket):
 async def scan(websocket):
     mem = []
     steps = int(360 / SCAN_ANGLE)
-    t.clear() # Clear the map for a new scan
+    # t.clear() # Persistent Map!
     
     print("Starting scan...")
     for step in range(steps):
@@ -172,11 +217,15 @@ async def scan(websocket):
         # TODO: check for d=-1 (bad scan)
         
         # Visualize the reading immediately
-        draw_wedge(current_angle, d)
+        # draw_wedge(current_angle, d) # Old absolute drawing
+        draw_relative_wedge(d)
         
         # Move the robot
-        # Move the robot
         await send_command(websocket, "turn", SCAN_ANGLE)
+        
+        # Move the turtle
+        t.right(SCAN_ANGLE)
+        
         await wait_until_idle(websocket)
     
     return mem
@@ -201,15 +250,36 @@ async def main():
                         print(readings)
                         print(f"Moving toward clear path: {farthest}cm at {target_angle}°")
                         
-                        # Highlight the chosen path
-                        draw_wedge(target_angle, farthest, override_color="red")
+                        print(readings)
+                        print(f"Moving toward clear path: {farthest}cm at {target_angle}°")
                         
+                        # Highlight the chosen path
+                        # draw_wedge(target_angle, farthest, override_color="red")
+                        # This would need to happen BEFORE we turned the turtle during scan?
+                        # Actually the turtle ended up at 360 degrees (0) after the scan loop.
+                        # So it should be facing the original direction.
                         
                         # Turn to face the path and move
                         # Note: The robot already finished a 360, so we turn relative to 'front'
+                        
+                        # Robot turn
                         await send_command(websocket, "turn", target_angle)
+                        
+                        # Turtle turn
+                        t.right(target_angle)
+                        
+                        draw_relative_wedge(farthest, color="red") # Draw the "choice"
+
                         await wait_until_idle(websocket)
-                        await send_command(websocket, "move", min(farthest / 2, 40))
+                        
+                        move_dist = min(farthest / 2, 40)
+                        
+                        # Robot move
+                        await send_command(websocket, "move", move_dist)
+                        
+                        # Turtle move
+                        t.forward(move_dist * 2) 
+                        
                         await wait_until_idle(websocket)
 
         except (websockets.exceptions.ConnectionClosedError, ConnectionResetError, OSError) as e:
