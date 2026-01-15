@@ -198,6 +198,7 @@ async def main():
                         target_idx = readings.index(farthest)
                         target_angle = target_idx * SCAN_ANGLE
                         
+                        print(readings)
                         print(f"Moving toward clear path: {farthest}cm at {target_angle}°")
                         
                         # Highlight the chosen path
