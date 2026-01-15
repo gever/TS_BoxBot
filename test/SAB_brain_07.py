@@ -82,13 +82,13 @@ def draw_wedge(angle, distance, override_color=None):
     
     t.end_fill()
 
-def draw_relative_wedge(distance, color="darkgreen"):
+def draw_relative_wedge(distance, color="darkgreen", perimeter_only=True):
     """Draws a wedge relative to the turtle's current position and heading."""
     if distance == -1:
         color = "orange"
         draw_dist = 200
     elif distance > 0:
-        draw_dist = distance * 2
+        draw_dist = distance * 2 # Scale: 1cm = 2 pixels
     else:
         return
 
@@ -97,30 +97,42 @@ def draw_relative_wedge(distance, color="darkgreen"):
     start_heading = t.heading()
 
     t.fillcolor(color)
-    t.begin_fill()
-    t.pendown()
+    t.pencolor(color) # Ensure line is correct color
     
-    # 1. Go to Right Point
-    t.left(SCAN_ANGLE / 2) # Turn to right edge (relative to center axis) - wait, turtle 0 is East. 
-                           # If we assume turtle is facing the scan direction:
-                           # Left edge is +angle/2, Right edge is -angle/2
+    if not perimeter_only:
+        t.begin_fill()
+        t.pendown()
+    else:
+        t.penup()
+    
+    # 1. Go to Left Point (relative to scan direction)
+    # The scan angle is centered.
+    t.left(SCAN_ANGLE / 2) 
     t.forward(draw_dist)
     left_pos = t.pos()
+
+    # if perimeter_only:
+    #    t.penup() # Lift pen to not draw side
     
     # 2. Go to Right Point
-    t.penup()
     t.goto(start_pos)
     t.setheading(start_heading)
     t.right(SCAN_ANGLE / 2)
-    t.pendown()
-    t.forward(draw_dist)
-    right_pos = t.pos()
-
-    # 3. Connect them
-    t.goto(left_pos)
-    t.goto(start_pos)
     
-    t.end_fill()
+    if perimeter_only:
+        t.forward(draw_dist)
+        right_pos = t.pos()
+        t.pendown()
+        t.goto(left_pos) # Draw the perimeter line
+        t.penup()
+    else:
+        t.pendown()
+        t.forward(draw_dist)
+        right_pos = t.pos()
+        # 3. Connect them
+        t.goto(left_pos)
+        t.goto(start_pos)
+        t.end_fill()
     
     # Restore state
     t.penup()
