@@ -41,6 +41,17 @@ package: release
 	cd release_to_manufacture && zip -r release_package.zip release_package
 	@echo "Package ready at release_to_manufacture/release_package.zip"
 
+# Copy release binaries into docs/firmware/ for the ESP Web Tools GitHub Pages installer.
+# Run this after `make package` whenever you cut a new release.
+publish-docs: package
+	@echo "Copying release binaries to docs/firmware/..."
+	@mkdir -p docs/firmware
+	cp .pio/build/release/bootloader.bin docs/firmware/
+	cp .pio/build/release/firmware.bin   docs/firmware/
+	cp .pio/build/release/partitions.bin docs/firmware/
+	cp .pio/build/release/spiffs.bin     docs/firmware/
+	@echo "docs/firmware/ updated. Commit and push to update the web installer."
+
 # Install firmware to the device
 install:
 	pio run -e esp32dev --target upload
