@@ -1,113 +1,433 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width">
-    <title>Boxbot Rover Control Panel</title>
-    <link href="style.css" rel="stylesheet" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Boxbot Movement Planner</title>
+    <style>
+        /* ── Reset & Base ── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            width: 100%; height: 100%;
+            font-family: 'Arial Rounded MT Bold', Arial, sans-serif;
+            background: #f0f4ff;
+            overflow: hidden;
+            touch-action: manipulation; /* prevent double-tap zoom */
+        }
+
+        /* ── Color palette ── */
+        :root {
+            --fwd-color:   #6ee86e;   /* light green  */
+            --fwd-dark:    #3bb83b;
+            --bwd-color:   #64d4f5;   /* light blue   */
+            --bwd-dark:    #1fa8d4;
+            --left-color:  #f56080;   /* rose red     */
+            --left-dark:   #d42848;
+            --right-color: #ffa040;   /* orange       */
+            --right-dark:  #d87010;
+
+            --undo-color:  #ffe066;
+            --clear-color: #ffaaaa;
+            --send-color:  #7bed9f;
+
+            --chip-radius: 14px;
+            --btn-radius:  18px;
+        }
+
+        /* ── Page layout ── */
+        #page {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        /* ── Top bar ── */
+        #topbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 16px;
+            background: #fff;
+            border-bottom: 3px solid #c8d0e8;
+        }
+        #topbar img { height: 44px; cursor: pointer; }
+        #topbar h1  { font-size: 1.4rem; color: #334; flex: 1; }
+        #coms_status {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        /* ── Main content (buttons | plan) ── */
+        #main {
+            display: flex;
+            flex: 1;
+            gap: 0;
+            overflow: hidden;
+        }
+
+        /* ── LEFT: command button panel ── */
+        #button-panel {
+            display: flex;
+            flex-direction: column;
+            padding: 10px 10px;
+            background: #e8ecf8;
+            border-right: 3px solid #c8d0e8;
+            flex: 0 0 auto;
+            /* No overflow — all buttons must be fully visible */
+            overflow: hidden;
+            gap: 6px;
+        }
+
+        /* Each half of the panel is a 2-column grid (fwd+bwd, or left+right) */
+        .btn-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto;   /* label row + N button rows */
+            column-gap: 8px;
+            row-gap: 6px;
+            flex: 1;                    /* top and bottom sections share space equally */
+            min-height: 0;
+        }
+
+        /* Horizontal rule between the two sections */
+        .section-divider {
+            border: none;
+            border-top: 2px solid #c8d0e8;
+            margin: 2px 0;
+        }
+
+        /* Labels sit in their column, spanning only 1 column */
+        .group-label {
+            font-size: 0.72rem;
+            font-weight: bold;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: #556;
+            padding: 0 4px 2px;
+            display: flex;
+            align-items: flex-end;
+        }
+
+        /* Movement buttons — height fills available grid row */
+        .panel_button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            border-radius: var(--btn-radius);
+            cursor: pointer;
+            padding: 0 8px;
+            min-height: 52px;
+            width: 100%;
+            font-size: 1.05rem;
+            font-weight: bold;
+            color: #222;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.18);
+            transition: transform 0.08s, box-shadow 0.08s, filter 0.08s;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .panel_button:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.18);
+            filter: brightness(0.9);
+        }
+
+        /* Color classes — keep original names for motion_script.js */
+        .fwd_style   { background-color: var(--fwd-color);   border-bottom: 4px solid var(--fwd-dark);   }
+        .bwd_style   { background-color: var(--bwd-color);   border-bottom: 4px solid var(--bwd-dark);   }
+        .left_style  { background-color: var(--left-color);  border-bottom: 4px solid var(--left-dark);  }
+        .right_style { background-color: var(--right-color); border-bottom: 4px solid var(--right-dark); }
+
+        /* ── RIGHT: movement plan ── */
+        #plan-panel {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding: 14px 14px 10px;
+            overflow: hidden;
+        }
+
+        #plan-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #334;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+        #plan-title span.step-count {
+            font-size: 0.9rem;
+            color: #778;
+        }
+
+        /* Scrollable command chip list */
+        #lines_of_code {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 8px 4px;
+            min-height: 0;
+        }
+
+        /* Each command chip */
+        #lines_of_code pre {
+            display: flex;
+            align-items: center;
+            padding: 10px 16px;
+            border-radius: var(--chip-radius);
+            font-family: 'Arial Rounded MT Bold', Arial, sans-serif;
+            font-size: 1.05rem;
+            font-weight: bold;
+            color: #222;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+            white-space: pre;
+            animation: chipIn 0.18s ease-out;
+        }
+
+        @keyframes chipIn {
+            from { opacity: 0; transform: translateX(-12px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Empty state */
+        #empty-hint {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex: 1;
+            color: #aab;
+            font-size: 1.1rem;
+            text-align: center;
+            pointer-events: none;
+        }
+        #empty-hint .hint-icon { font-size: 3rem; }
+
+        /* ── Action buttons (UNDO / CLEAR / SEND) ── */
+        #action-bar {
+            display: flex;
+            gap: 8px;
+            padding: 10px 0 2px;
+        }
+
+        .action-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            height: 72px;
+            border: none;
+            border-radius: var(--btn-radius);
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            font-size: 1rem;
+            color: #222;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.15);
+            transition: transform 0.08s, box-shadow 0.08s, filter 0.08s;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .action-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.15);
+            filter: brightness(0.9);
+        }
+        .action-icon { font-size: 1.6rem; line-height: 1; }
+
+        #button_undo  { background: var(--undo-color);  border-bottom: 4px solid #c8a800; }
+        #button_clear { background: var(--clear-color); border-bottom: 4px solid #c85050; }
+        #button_send  { background: var(--send-color);  border-bottom: 4px solid #30b060; flex: 1.5; }
+
+        /* ── Scrollbar styling ── */
+        #lines_of_code::-webkit-scrollbar { width: 6px; }
+        #lines_of_code::-webkit-scrollbar-thumb { background: #bbc; border-radius: 3px; }
+    </style>
 </head>
 
-<body style="width:100%; background-color:rgb(255, 255, 255);">
-    <div id="logo">
-        <img src="boxbot_icon.png" onclick="document.location='index.html'" width="50px" height="50px" />
-    </div>
-    <table style="width:100%">
-        <tr>
-            <td class="command_container">
-                <table width="100%;">
-                    <!-- first row -->
-                    <tr>
-                        <td id="MOV_FWD_1" class="panel_button fwd_style">
-                            <div class="button_contents">Forward 1</div>
-                        </td>
-                        <td id="MOV_BWD_1" class="panel_button bwd_style">
-                            <div class="button_contents">Backward 1</div>
-                        </td>
-                        <td id="TRN_LT_15" class="panel_button left_style">
-                            <div class="button_contents">Left 15</div>
-                        </td>
-                        <td id="TRN_RT_15" class="panel_button right_style">
-                            <div class="button_contents">Right 15</div>
-                        </td>
-                    </tr>
-                    <!-- second row -->
-                    <tr>
-                        <td id="MOV_FWD_5" class="panel_button fwd_style">
-                            <div class="button_contents">Forward 5</div>
-                        </td>
-                        <td id="MOV_BWD_5" class="panel_button bwd_style">
-                            <div class="button_contents">Backward 5</div>
-                        </td>
-                        <td id="TRN_LT_30" class="panel_button left_style">
-                            <div class="button_contents">Left 30</div>
-                        </td>
-                        <td id="TRN_RT_30" class="panel_button right_style">
-                            <div class="button_contents">Right 30</div>
-                        </td>
-                    </tr>
-                    <!-- third row -->
-                    <tr>
-                        <td id="MOV_FWD_10" class="panel_button fwd_style">
-                            <div class="button_contents">Forward 10</div>
-                        </td>
-                        <td id="MOV_BWD_10" class="panel_button bwd_style">
-                            <div class="button_contents">Backward 10</div>
-                        </td>
-                        <td id="TRN_LT_90" class="panel_button left_style">
-                            <div class="button_contents">Left 90</div>
-                        </td>
-                        <td id="TRN_RT_90" class="panel_button right_style">
-                            <div class="button_contents">Right 90</div>
-                        </td>
-                    </tr>
-                    <!-- fourth row -->
-                    <tr>
-                        <td>
-                        </td>
-                        <td>
-                        </td>
-                        <td id="TRN_LT_180" class="panel_button left_style">
-                            <div class="button_contents">Left 180</div>
-                        </td>
-                        <td id="TRN_RT_180" class="panel_button right_style">
-                            <div class="button_contents">Right 180</div>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-            <td>
-                <div class="code_container">
-                    <div class="main_pane">
-                        <div class="panel_title" onclick="forceRefresh(event)">Movement Plan<span id="coms_status">
-                                ..connecting</span></div>
-                        <div id="lines_of_code"></div>
-                    </div>
-                    <table width="100%" style="vertical-align:bottom;">
-                        <tr>
-                            <td>
-                                <div id="button_undo" class="code_button undo_button" onclick="undoCode(event)">
-                                    <div class="code_button_contents">Undo</div>
-                                </div>
-                            </td>
-                            <td>
-                                <div id="button_clear" class="code_button clear_plan_button" onclick="clearCode(event)">
-                                    <div class="code_button_contents">Clear Plan</div>
-                                </div>
-                            </td>
-                            <td>
-                                <div id="button_send" class="code_button" onclick="sendCode(event)">
-                                    <div class="code_button_contents">UPLINK</div>
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
-                    <div><img src="TSMM-Documentation-PlanGUI.jpg" width="380"/></div>
-                </div>
-            </td>
-        </tr>
-    </table>
-    <script src="motion_script.js"></script>
-</body>
+<body>
+<div id="page">
 
+    <!-- Top bar -->
+    <div id="topbar">
+        <img src="boxbot_icon.png" onclick="document.location='index.html'" alt="BoxBot">
+        <h1>🤖 Movement Planner</h1>
+        <span id="coms_status">…connecting</span>
+    </div>
+
+    <!-- Main content -->
+    <div id="main">
+
+        <!-- LEFT: command buttons — 2-column grid, no scrolling -->
+        <div id="button-panel">
+
+            <!-- TOP HALF: Forward (left col) + Backward (right col) -->
+            <div class="btn-section">
+                <!-- Column labels -->
+                <div class="group-label">⬆️ Forward</div>
+                <div class="group-label">⬇️ Backward</div>
+                <!-- Row 1 -->
+                <div id="MOV_FWD_1"  class="panel_button fwd_style">1 step</div>
+                <div id="MOV_BWD_1"  class="panel_button bwd_style">1 step</div>
+                <!-- Row 2 -->
+                <div id="MOV_FWD_5"  class="panel_button fwd_style">5 steps</div>
+                <div id="MOV_BWD_5"  class="panel_button bwd_style">5 steps</div>
+                <!-- Row 3 -->
+                <div id="MOV_FWD_10" class="panel_button fwd_style">10 steps</div>
+                <div id="MOV_BWD_10" class="panel_button bwd_style">10 steps</div>
+            </div>
+
+            <hr class="section-divider">
+
+            <!-- BOTTOM HALF: Turn Left (left col) + Turn Right (right col) -->
+            <div class="btn-section">
+                <!-- Column labels -->
+                <div class="group-label">↩️ Turn Left</div>
+                <div class="group-label">↪️ Turn Right</div>
+                <!-- Row 1 -->
+                <div id="TRN_LT_15"  class="panel_button left_style">15°</div>
+                <div id="TRN_RT_15"  class="panel_button right_style">15°</div>
+                <!-- Row 2 -->
+                <div id="TRN_LT_30"  class="panel_button left_style">30°</div>
+                <div id="TRN_RT_30"  class="panel_button right_style">30°</div>
+                <!-- Row 3 -->
+                <div id="TRN_LT_90"  class="panel_button left_style">90°</div>
+                <div id="TRN_RT_90"  class="panel_button right_style">90°</div>
+                <!-- Row 4 -->
+                <div id="TRN_LT_180" class="panel_button left_style">180°</div>
+                <div id="TRN_RT_180" class="panel_button right_style">180°</div>
+            </div>
+
+        </div><!-- /#button-panel -->
+
+        <!-- RIGHT: movement plan -->
+        <div id="plan-panel">
+            <div id="plan-title">
+                My Movement Plan
+                <span class="step-count" id="step-count"></span>
+            </div>
+
+            <!-- Command chips appear here -->
+            <div id="lines_of_code"></div>
+
+            <!-- Empty state hint (hidden once commands exist) -->
+            <div id="empty-hint">
+                <div class="hint-icon">👆</div>
+                <div>Tap a button to add<br>a move to your plan!</div>
+            </div>
+
+            <!-- UNDO / CLEAR / SEND -->
+            <div id="action-bar">
+                <div id="button_undo"  class="action-btn" onclick="undoCode(event)">
+                    <span class="action-icon">↩</span>Undo
+                </div>
+                <div id="button_clear" class="action-btn" onclick="clearCode(event)">
+                    <span class="action-icon">🗑</span>Clear
+                </div>
+                <div id="button_send"  class="action-btn" onclick="sendCode(event)">
+                    <span class="action-icon">🚀</span>SEND!
+                </div>
+            </div>
+
+        </div><!-- /#plan-panel -->
+
+    </div><!-- /#main -->
+
+</div><!-- /#page -->
+
+<script src="motion_script.js"></script>
+<script>
+    // ── Patch motion_script.js to point at the correct code area ──
+    // motion_script.js queries "#code_area" but our container is "#lines_of_code".
+    // Re-bind the variable it uses.
+    lines_of_code = document.getElementById("lines_of_code");
+
+    // ── Icon map: button id prefix → emoji ──
+    const CMD_ICONS = {
+        MOV_FWD: "⬆️",
+        MOV_BWD: "⬇️",
+        TRN_LT:  "↩️",
+        TRN_RT:  "↪️",
+    };
+
+    // Human-readable label for a button id, e.g. "MOV_FWD" → "Forward"
+    const CMD_LABELS = {
+        MOV_FWD: "Forward",
+        MOV_BWD: "Backward",
+        TRN_LT:  "Left",
+        TRN_RT:  "Right",
+    };
+
+    function getPrefix(id) {
+        // e.g. "MOV_FWD_10" → "MOV_FWD"
+        const parts = id.split("_");
+        return parts[0] + "_" + parts[1];
+    }
+
+    // ── Override addLineOfCode ──
+    // Stores the raw command text in data-cmd so collect_code() can still
+    // read it, then renders an icon + readable label as the visible content.
+    function addLineOfCode(evt, id, bg_color) {
+        if (lines_of_code.childElementCount <= 9) {
+            confirmationAnimation(evt.target);
+
+            const prefix  = getPrefix(id);                   // e.g. "MOV_FWD"
+            const param   = id.split("_")[2];                // e.g. "5"
+            const rawCmd  = id.split("_").join(" ");         // e.g. "MOV FWD 5"
+            const icon    = CMD_ICONS[prefix]  || "▶️";
+            const label   = CMD_LABELS[prefix] || prefix;
+
+            // Unit suffix: moves → "steps", turns → "°"
+            const suffix  = prefix.startsWith("MOV") ? " steps" : "°";
+            const display = icon + "  " + label + " " + param + suffix;
+
+            const elem = document.createElement("pre");
+            elem.dataset.cmd           = rawCmd;             // raw cmd for collect_code
+            elem.style.backgroundColor = bg_color;
+            elem.textContent           = display;            // safe — no HTML injection risk
+            lines_of_code.appendChild(elem);
+
+            recalculateCost();
+        } else {
+            console.log("line limit reached");
+        }
+    }
+
+    // ── Override collect_code ──
+    // Reads data-cmd (raw command text) instead of innerHTML so the
+    // icon text doesn't corrupt the robot communication format.
+    function collect_code() {
+        var current   = lines_of_code.firstChild;
+        var code_blob = "";
+        while (current) {
+            code_blob += (current.dataset.cmd || current.textContent) + "\n";
+            current = current.nextSibling;
+        }
+        code_blob = code_blob.split(" ").join(",");
+        return code_blob;
+    }
+
+    // ── Keep the empty-hint and step counter in sync ──
+    const emptyHint  = document.getElementById("empty-hint");
+    const stepCount  = document.getElementById("step-count");
+
+    function updatePlanUI() {
+        const n = lines_of_code.childElementCount;
+        emptyHint.style.display = n === 0 ? "flex" : "none";
+        stepCount.textContent   = n === 0 ? "" : n + " step" + (n === 1 ? "" : "s");
+    }
+
+    // Observe mutations on the command list to update the hint
+    new MutationObserver(updatePlanUI).observe(lines_of_code, { childList: true });
+    updatePlanUI();
+</script>
+</body>
 </html>
