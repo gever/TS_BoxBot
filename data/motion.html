@@ -186,6 +186,57 @@
             border: 2px solid #d8dcee;
             background: #fff;
             display: block;
+            min-height: 0;
+        }
+
+        /* ── Energy cost display ── */
+        #energy-display {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 14px;
+            background: #fff;
+            border: 2px solid #d8dcee;
+            border-radius: 14px;
+            margin-bottom: 8px;
+            flex-shrink: 0;
+        }
+        #energy-icon { font-size: 1.4rem; line-height: 1; }
+        #energy-label {
+            font-size: 0.78rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #556;
+            white-space: nowrap;
+        }
+        #energy-bar-track {
+            flex: 1;
+            height: 14px;
+            background: #eef0f8;
+            border-radius: 7px;
+            overflow: hidden;
+            min-width: 40px;
+        }
+        #energy-bar-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 7px;
+            background: #6ee86e;
+            transition: width 0.35s ease, background-color 0.35s ease;
+        }
+        #energy-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #334;
+            min-width: 2.2ch;
+            text-align: right;
+            line-height: 1;
+        }
+        #energy-unit {
+            font-size: 0.75rem;
+            color: #778;
+            white-space: nowrap;
         }
 
         #plan-title {
@@ -337,8 +388,8 @@
                 <div id="TRN_LT_15"  class="panel_button left_style">15°</div>
                 <div id="TRN_RT_15"  class="panel_button right_style">15°</div>
                 <!-- Row 2 -->
-                <div id="TRN_LT_30"  class="panel_button left_style">30°</div>
-                <div id="TRN_RT_30"  class="panel_button right_style">30°</div>
+                <div id="TRN_LT_45"  class="panel_button left_style">45°</div>
+                <div id="TRN_RT_45"  class="panel_button right_style">45°</div>
                 <!-- Row 3 -->
                 <div id="TRN_LT_90"  class="panel_button left_style">90°</div>
                 <div id="TRN_RT_90"  class="panel_button right_style">90°</div>
@@ -385,6 +436,18 @@
             <!-- Path visualisation sub-panel -->
             <div id="path-panel">
                 <div id="path-title">🗺 Path Preview</div>
+
+                <!-- Energy cost display -->
+                <div id="energy-display">
+                    <span id="energy-icon">⚡</span>
+                    <span id="energy-label">Energy Cost</span>
+                    <div id="energy-bar-track">
+                        <div id="energy-bar-fill"></div>
+                    </div>
+                    <span id="energy-value">0</span>
+                    <span id="energy-unit">pts</span>
+                </div>
+
                 <canvas id="path-canvas"></canvas>
             </div><!-- /#path-panel -->
 
@@ -526,7 +589,7 @@
     // ── Override recalculateCost ──
     // Reads data-cmd so the SVG in turn chips doesn't corrupt the parse.
     function recalculateCost() {
-        const costTable = { 1: 1, 5: 5, 10: 10, 20: 20, 15: 1, 30: 2, 90: 6, 180: 12 };
+        const costTable = { 1: 1, 5: 5, 10: 10, 20: 20, 15: 1, 45: 3, 90: 6, 180: 12 };
         var current   = lines_of_code.firstChild;
         var sub_total = 0;
         while (current) {
@@ -551,14 +614,33 @@
     }
     initTurnButtonIcons();
 
-    // ── Keep the empty-hint and step counter in sync ──
+    // ── Keep the empty-hint, step counter, and energy cost in sync ──
     const emptyHint  = document.getElementById("empty-hint");
     const stepCount  = document.getElementById("step-count");
+    const energyValue = document.getElementById("energy-value");
+    const energyFill  = document.getElementById("energy-bar-fill");
+
+    // Cost bar: 0 → 50 pts maps to 0 → 100% width.
+    // Colour shifts green → yellow → red as the plan gets more expensive.
+    const ENERGY_MAX = 50;
+
+    function updateEnergyCost() {
+        const cost = recalculateCost();
+        energyValue.textContent = cost;
+
+        const pct = Math.min(cost / ENERGY_MAX * 100, 100);
+        energyFill.style.width = pct + "%";
+
+        if (pct < 40)       energyFill.style.backgroundColor = "#6ee86e";  // green
+        else if (pct < 70)  energyFill.style.backgroundColor = "#ffe066";  // yellow
+        else                energyFill.style.backgroundColor = "#ff6b6b";  // red
+    }
 
     function updatePlanUI() {
         const n = lines_of_code.childElementCount;
         emptyHint.style.display = n === 0 ? "flex" : "none";
         stepCount.textContent   = n === 0 ? "" : n + " step" + (n === 1 ? "" : "s");
+        updateEnergyCost();
         drawPath();
     }
 
