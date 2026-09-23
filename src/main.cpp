@@ -26,7 +26,8 @@
 // 0.71: fix forward/backward inversion settings
 // 0.72b: young robotics week version
 // 0.73: separate out status code, change default direction of motors
-#define VERSION "0.73"
+// 0.8: improve UX on drive and motion planning
+#define VERSION "0.80"
 
 #define SDEBUG(label, x)                                                       \
   {                                                                            \

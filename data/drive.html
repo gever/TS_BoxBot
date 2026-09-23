@@ -4,6 +4,18 @@
     <title>Boxbot Controller</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
+        :root {
+            --fwd-color:   #6ee86e;
+            --fwd-dark:    #3bb83b;
+            --bwd-color:   #64d4f5;
+            --bwd-dark:    #1fa8d4;
+            --left-color:  #f56080;
+            --left-dark:   #d42848;
+            --right-color: #ffa040;
+            --right-dark:  #d87010;
+            --stop-color:  #ffaaaa;
+            --stop-dark:   #c85050;
+        }
         body {
             font-family: Arial, sans-serif;
             display: flex;
@@ -32,24 +44,34 @@
         }
         button {
             border: none;
-            background-color: #333;
-            color: #FFF;
+            color: #222;
             padding: 10px 20px;
             margin: 10px;
-            border-radius: 5px;
+            border-radius: 18px;
             font-size: 16px;
+            font-weight: bold;
             cursor: pointer;
-            transition: background-color 0.3s;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.18);
+            transition: transform 0.08s, box-shadow 0.08s, filter 0.08s;
             -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
             user-select: none;
             touch-action: manipulation; /* Improved touch behavior */
         }
-        button:hover {
-            background-color: #555;
+        /* Active state for visual feedback */
+        button:active, button.active-press {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.18);
+            filter: brightness(0.9);
         }
         
+        #fwd { background-color: var(--fwd-color); border-bottom: 4px solid var(--fwd-dark); }
+        #bwd { background-color: var(--bwd-color); border-bottom: 4px solid var(--bwd-dark); }
+        #left { background-color: var(--left-color); border-bottom: 4px solid var(--left-dark); }
+        #right { background-color: var(--right-color); border-bottom: 4px solid var(--right-dark); }
+        #stop { background-color: var(--stop-color); border-bottom: 4px solid var(--stop-dark); }
+
         /* Scale UI for tablets and smaller screens */
         @media (max-width: 768px) {
             button {
@@ -133,17 +155,27 @@
             fetch("/stop");
         }
 
+        function setButtonActiveState(id, isActive) {
+            var btn = document.getElementById(id);
+            if (btn) {
+                if (isActive) btn.classList.add('active-press');
+                else btn.classList.remove('active-press');
+            }
+        }
+
         function bindButton(id, cmdUrl) {
             var btn = document.getElementById(id);
             if (!btn) return;
             
             var pressAction = function(e) {
                 e.preventDefault();
+                setButtonActiveState(id, true);
                 startCommand(cmdUrl);
             };
             
             var releaseAction = function(e) {
                 e.preventDefault();
+                setButtonActiveState(id, false);
                 stopCommand();
             };
 
@@ -151,6 +183,7 @@
             btn.addEventListener('mousedown', pressAction);
             btn.addEventListener('mouseup', releaseAction);
             btn.addEventListener('mouseleave', function(e) {
+                setButtonActiveState(id, false);
                 if (isRunning && activeCommand === cmdUrl) stopCommand();
             });
 
@@ -169,11 +202,20 @@
         var stopBtn = document.getElementById('stop');
         var manualStopAction = function(e) {
             e.preventDefault();
+            setButtonActiveState('stop', true);
             stopCommand();
             fetch("/stop"); // extra fetch just in case
         };
+        var manualStopRelease = function(e) {
+            e.preventDefault();
+            setButtonActiveState('stop', false);
+        };
         stopBtn.addEventListener('mousedown', manualStopAction);
+        stopBtn.addEventListener('mouseup', manualStopRelease);
+        stopBtn.addEventListener('mouseleave', manualStopRelease);
         stopBtn.addEventListener('touchstart', manualStopAction, {passive: false});
+        stopBtn.addEventListener('touchend', manualStopRelease, {passive: false});
+        stopBtn.addEventListener('touchcancel', manualStopRelease, {passive: false});
 
         // Keyboard controls
         document.addEventListener('keydown', (event) => {
@@ -186,18 +228,23 @@
 
             switch (event.code) {
                 case 'ArrowUp':
+                setButtonActiveState('fwd', true);
                 startCommand("/move?dist=" + DEFAULT_MOVE);
                 break;
                 case 'ArrowDown':
+                setButtonActiveState('bwd', true);
                 startCommand("/move?dist=-" + DEFAULT_MOVE);
                 break;
                 case 'ArrowLeft':
+                setButtonActiveState('left', true);
                 startCommand("/turn?angle=-" + DEFAULT_TURN);
                 break;
                 case 'ArrowRight':
+                setButtonActiveState('right', true);
                 startCommand("/turn?angle=" + DEFAULT_TURN);
                 break;
                 case 'Space':
+                setButtonActiveState('stop', true);
                 stopCommand();
                 fetch("/stop");
                 break;
@@ -241,10 +288,23 @@
 
             switch (event.code) {
                 case 'ArrowUp':
-                case 'ArrowDown':
-                case 'ArrowLeft':
-                case 'ArrowRight':
+                setButtonActiveState('fwd', false);
                 stopCommand();
+                break;
+                case 'ArrowDown':
+                setButtonActiveState('bwd', false);
+                stopCommand();
+                break;
+                case 'ArrowLeft':
+                setButtonActiveState('left', false);
+                stopCommand();
+                break;
+                case 'ArrowRight':
+                setButtonActiveState('right', false);
+                stopCommand();
+                break;
+                case 'Space':
+                setButtonActiveState('stop', false);
                 break;
             }
         });
