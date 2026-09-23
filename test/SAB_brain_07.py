@@ -10,7 +10,7 @@ import traceback
 ROBOT_IP = "10.100.100.130" # Default Access Point IP
 ROBOT_PORT = 81
 URI = f"ws://{ROBOT_IP}:{ROBOT_PORT}/"
-DEBUG = False
+DEBUG = True
 SCAN_ANGLE = 360/20
 
 # --- Visualization Setup ---
@@ -18,6 +18,7 @@ screen = turtle.Screen()
 screen.title("Robot LiDAR Scan Visualization")
 screen.bgcolor("black")
 screen.setup(width=1200, height=1200)
+screen.tracer(0) # Disable auto-animation for performance
 
 t = turtle.Turtle()
 t.speed(0) # Fastest drawing speed
@@ -81,6 +82,7 @@ def draw_wedge(angle, distance, override_color=None):
     t.goto(0,0)
     
     t.end_fill()
+    screen.update() # Manual update
 
 def draw_relative_wedge(distance, color="darkgreen", perimeter_only=True):
     """Draws a wedge relative to the turtle's current position and heading."""
@@ -135,9 +137,11 @@ def draw_relative_wedge(distance, color="darkgreen", perimeter_only=True):
         t.end_fill()
     
     # Restore state
+    # Restore state
     t.penup()
     t.setheading(start_heading)
     t.goto(start_pos)
+    screen.update() # Manual update
 
 
 def log(msg, end="\n"):
@@ -239,6 +243,7 @@ async def scan(websocket):
         t.right(SCAN_ANGLE)
         
         await wait_until_idle(websocket)
+        await asyncio.sleep(0) # Yield to event loop
     
     return mem
 
@@ -290,7 +295,15 @@ async def main():
                         await send_command(websocket, "move", move_dist)
                         
                         # Turtle move
+                        # Leave an orange trail
+                        t.pencolor("orange")
+                        t.pensize(5)
+                        t.pendown()
                         t.forward(move_dist * 2) 
+                        t.penup()
+                        # Restore defaults
+                        t.pencolor("lime")
+                        t.pensize(1)
                         
                         await wait_until_idle(websocket)
 

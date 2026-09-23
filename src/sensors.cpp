@@ -23,7 +23,21 @@ bool temperature = false;
 
 #define DIST_SAMPLE_RATE 8
 volatile int currentDistance = 0;
+volatile unsigned long echo_start_time = 0;
 TaskHandle_t distanceTaskHandle = NULL;
+
+void IRAM_ATTR echo_isr() {
+  if (digitalRead(18) == HIGH) { // echoPin is 18
+    echo_start_time = micros();
+  } else {
+    unsigned long duration = micros() - echo_start_time;
+    // cm = (duration / 29.0) / 2.0;
+    int d = duration / 58;
+    if (d > 0 && d < 400) {
+      currentDistance = d;
+    }
+  }
+}
 
 // allocate pins
 const int pingPin = 5;         // Trigger Pin of Ultrasonic Sensor
@@ -38,7 +52,15 @@ int readDistanceSensor(void);
 
 void distanceTask(void *parameter) {
   for (;;) {
-    currentDistance = readDistanceSensor();
+    // Trigger the sensor
+    digitalWrite(5, LOW); // pingPin is 5
+    delayMicroseconds(2);
+    digitalWrite(5, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(5, LOW);
+
+    // The ISR handles the rest
+
     vTaskDelay(1000 / DIST_SAMPLE_RATE / portTICK_PERIOD_MS);
   }
 }
@@ -51,6 +73,11 @@ void sensors_setup() {
   // setupAccel();
   pinMode(luminosityPin1, INPUT_PULLDOWN);
   pinMode(luminosityPin2, INPUT_PULLDOWN);
+
+  pinMode(pingPin, OUTPUT);
+  pinMode(echoPin, INPUT_PULLDOWN);
+
+  attachInterrupt(digitalPinToInterrupt(echoPin), echo_isr, CHANGE);
 
   // set up the distance sensor task
   // Core 0 is usually where the WiFi stuff runs? Use 1?
@@ -107,32 +134,9 @@ int getDistance(void) {
   return currentDistance;
 }
 
-// Internal function to read the hardware
-int readDistanceSensor(void) {
-  //  send pulse
-  long duration;
-  float cm;
-  pinMode(pingPin, OUTPUT);
-  digitalWrite(pingPin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(pingPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(pingPin, LOW);
-  pinMode(echoPin, INPUT);
-  duration = pulseIn(echoPin, HIGH, 25000);
-
-  // format value
-  // inches = (duration / 74 / 2);
-  // how long for the ping to go out and come back?
-  cm = (duration / 29.0) / 2.0;
-  // Serial.print(inches);
-  // Serial.print("in, ");
-  // Serial.print(cm);
-  // Serial.print("cm");
-  // Serial.println();
-
-  return (cm);
-}
+// Internal function to read the hardware - DEPRECATED / NOT USED
+// kept for interface compatibility if needed, but logic is moved to ISR/Task
+int readDistanceSensor(void) { return currentDistance; }
 
 #ifdef NOT_USED
 void setupAccel() {

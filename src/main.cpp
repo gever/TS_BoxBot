@@ -500,25 +500,42 @@ void handleTemperature() {
 }
 
 void handleGetVars() {
-  String html = "<html><head><title>Settings</title></head><body>";
-  // add a text input field for the label
-  html += "<pre>\n";
-  html += render_settings();
-  html += "</pre>\n";
-  html += "</body></html>";
-  server.send(200, "text/html", html);
+  String json = "{";
+  for (int i = 0; i < sizeof(settings) / sizeof(setting_t); i++) {
+    json += "\"";
+    json += settings[i].label;
+    json += "\":";
+    switch (settings[i].type) {
+      case INT:
+        json += String(*settings[i].int_target);
+        break;
+      case FLOAT:
+        json += String(*settings[i].float_target);
+        break;
+      case BOOL:
+        json += String(*settings[i].bool_target);
+        break;
+      case STRING:
+        json += "\"";
+        json += settings[i].string_target;
+        json += "\"";
+        break;
+    }
+    if (i < sizeof(settings) / sizeof(setting_t) - 1) {
+      json += ",";
+    }
+  }
+  json += "}";
+  server.send(200, "application/json", json);
 }
 
 void handleSetVar() {
   // TODO: save current settings to SPIFFS/flash memory
   // TODO: save load current settings from SPIFFS
   if (server.args()) {
-    if (server.argName(0) == "label") {
-      String label;
-      String value;
-
-      label = server.arg(0);
-      value = server.arg(1);
+    if (server.hasArg("label") && server.hasArg("value") && server.args() == 2) {
+      String label = server.arg("label");
+      String value = server.arg("value");
 
       Serial.println("handleSetVar: " + label + " " + value);
 
@@ -531,9 +548,24 @@ void handleSetVar() {
         }
       }
     } else {
-      status_update("ERR: no label for setvar");
+      // Loop over all arguments for multi-variable form submissions
+      for (int j = 0; j < server.args(); j++) {
+        String label = server.argName(j);
+        String value = server.arg(j);
+        
+        for (int i = 0; i < sizeof(settings) / sizeof(setting_t); i++) {
+          if (label == settings[i].label) {
+            set_setting(&settings[i], value);
+            status_update("setvar", label.c_str(), value.c_str());
+            break;
+          }
+        }
+      }
     }
     save_settings();
+    server.send(200, "text/plain", "OK");
+  } else {
+    server.send(400, "text/plain", "No arguments provided");
   }
 }
 

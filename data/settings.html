@@ -3,59 +3,152 @@
 
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Boxbot Settings</title>
   <link href="style.css" rel="stylesheet" type="text/css" />
+  <style>
+    body { font-family: sans-serif; margin-left: 15px; margin-right: 15px; margin-bottom: 30px; }
+    .group { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+    .group h2 { margin-top: 0; font-size: 1.2em; }
+    .form-row { margin-bottom: 10px; display: flex; align-items: center; }
+    .form-row label { flex: 1; min-width: 150px; }
+    .form-row input, .form-row select { flex: 2; padding: 5px; box-sizing: border-box; width: 100%; max-width: 300px; }
+    .btn { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; }
+    .btn:hover { background: #0056b3; }
+    #toast { display: none; background: #d4edda; color: #155724; padding: 10px; border-radius: 4px; margin-top: 15px; max-width: 300px; }
+    #logo { font-size: 24px; font-weight: bold; display: flex; align-items: center; margin-bottom: 20px; margin-top: 15px; }
+    #logo img { cursor: pointer; margin-right: 10px; }
+  </style>
 </head>
 
-<body style="margin-left:15px;">
-  <div>
-    <div id="logo">
-      <img src="boxbot_icon.png" onclick="document.location='index.html'" width="50px" height="50px"/>
-      Boxbot
+<body>
+  <div id="logo">
+    <img src="boxbot_icon.png" onclick="document.location='index.html'" width="50px" height="50px"/>
+    Boxbot Settings
+  </div>
+
+  <form id="settings-form">
+    <div class="group">
+      <h2>Motor Controls</h2>
+      
+      <div class="form-row">
+        <label for="invert-direction">Invert Direction</label>
+        <select id="invert-direction" name="invert-direction">
+          <option value="0">False</option>
+          <option value="1">True</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label for="invert-turn">Invert Turn</label>
+        <select id="invert-turn" name="invert-turn">
+          <option value="0">False</option>
+          <option value="1">True</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label for="motor-step-rate">Motor Step Rate</label>
+        <input type="number" id="motor-step-rate" name="motor-step-rate" required>
+      </div>
+
+      <div class="form-row">
+        <label for="linear-turn-fudge">Linear Turn Fudge</label>
+        <input type="number" step="0.01" id="linear-turn-fudge" name="linear-turn-fudge" required>
+      </div>
+
+      <div class="form-row">
+        <label for="linear-motion-fudge">Linear Motion Fudge</label>
+        <input type="number" step="0.01" id="linear-motion-fudge" name="linear-motion-fudge" required>
+      </div>
     </div>
-    <h1>Select a configuration variable:</h1>
-    <form id="varform" method="post">
-      <label for="setting">Setting:</label>
-      <select id="label" name="label">
-        <option value="invert-direction">invert-direction</option>
-        <option value="invert-turn">invert-turn</option>
-        <option value="motor-step-rate">motor-step-rate</option>
-        <option value="linear-turn-fudge">linear-turn-fudge</option>
-        <option value="linear-motion-fudge">linear-motion-fudge</option>
-        <option value="use-wifi">use-wifi</option>
-        <option value="ap-ssid">ap-ssid</option>
-        <option value="ap-password">ap-password</option>
-        <option value="network-ssid">network-ssid</option>
-        <option value="network-password">network-password</option>
-      </select>
-      <label for="value">Value:</label>
-      <input type="text" id="value" name="value" required>
-      <input type="submit" value="Set">
-    </form>  
-  </div>
-  <div>
-    <h1>Current Settings</h1>
-    <iframe id="varview" src="/getvars" width="100%" height="100%"></iframe>
-  </div>
+
+    <div class="group">
+      <h2>Networking Settings</h2>
+      
+      <div class="form-row">
+        <label for="use-wifi">Use WiFi</label>
+        <select id="use-wifi" name="use-wifi">
+          <option value="0">False</option>
+          <option value="1">True</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label for="ap-ssid">AP SSID</label>
+        <input type="text" id="ap-ssid" name="ap-ssid" required>
+      </div>
+
+      <div class="form-row">
+        <label for="ap-password">AP Password</label>
+        <input type="text" id="ap-password" name="ap-password">
+      </div>
+
+      <div class="form-row">
+        <label for="network-ssid">Network SSID</label>
+        <input type="text" id="network-ssid" name="network-ssid" required>
+      </div>
+
+      <div class="form-row">
+        <label for="network-password">Network Password</label>
+        <input type="password" id="network-password" name="network-password">
+      </div>
+    </div>
+
+    <button type="submit" class="btn">Save Settings</button>
+    <div id="toast">Settings saved!</div>
+  </form>
+
   <script>
-    var form = document.getElementById('varform');
-    form.onsubmit = function(e) {
+    // Fetch current settings on load
+    fetch('/getvars')
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        for (var key in data) {
+          if (data.hasOwnProperty(key)) {
+            var el = document.getElementById(key);
+            if (el) {
+              if (el.tagName === 'SELECT') {
+                el.value = data[key] ? "1" : "0";
+              } else {
+                el.value = data[key];
+              }
+            }
+          }
+        }
+      })
+      .catch(function(err) { console.error("Error loading settings:", err); });
+
+    // Handle form submission
+    document.getElementById('settings-form').onsubmit = function(e) {
       e.preventDefault();
-      var label = document.getElementById('label').value;
-      var value = document.getElementById('value').value;
+      
+      var formData = new FormData(e.target);
+      var params = [];
+      
+      formData.forEach(function(value, key) {
+        params.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
+      });
+
       var xhr = new XMLHttpRequest();
       xhr.open('POST', '/setvar', true);
       xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-      xhr.send('label=' + label + '&value=' + value);
-      xhr.onreadystatechange = function() {
-        if (xhr.readyState == 4 && xhr.status == 200) {
-          console.log(xhr.responseText);
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          var toast = document.getElementById('toast');
+          toast.style.display = 'block';
+          setTimeout(function() { toast.style.display = 'none'; }, 3000);
+        } else {
+          alert('Failed to save settings.');
         }
-      }
-      // refresh the varview iframe
-      document.getElementById('varview').src = document.getElementById('varview').src;
-    }
+      };
+      xhr.onerror = function() {
+        console.error("Error saving settings");
+        alert('Error saving settings.');
+      };
+      xhr.send(params.join('&'));
+    };
   </script>
 </body>
+
 </html>
