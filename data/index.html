@@ -3,30 +3,33 @@
 
 <head>
   <title>BOXBOT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
     body {
       background-color: #f0f0f0;
       font-family: Arial, sans-serif;
+      font-size: 24px; /* 50% larger than default 16px */
     }
     table {
       border-collapse: collapse;
       width: 100%;
-      max-width: 600px;
+      max-width: 900px; /* 600px * 1.5 */
       margin: auto;
     }
 
     td {
-      padding: 10px;
+      padding: 15px; /* 10px * 1.5 */
       border: 1px solid #000;
     }
 
     button {
       width: 100%;
-      padding: 10px;
-      font-size: 20px;
+      padding: 15px; /* 10px * 1.5 */
+      font-size: 30px; /* 20px * 1.5 */
       background-color: #dc9353;
       color: white;
       border: none;
+      border-radius: 8px; /* slightly soften edges for modern look */
       cursor: pointer;
     }
 
@@ -38,19 +41,21 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
+      width: 90%;
+      max-width: 900px;
     }
   </style>
 </head>
 
 <body onload="getVersion()">
   <div class="centered">
-    <h1 style="text-align: center;">boxbot</h1>
-    <img src="boxbot_icon.png" style="display: block; margin: auto; width: 100px;">
-    <div id="version_txt" style="text-align: center; width: 100%;">---</div>
+    <h1 style="text-align: center; margin-bottom: 10px;">boxbot</h1>
+    <img src="boxbot_icon.png" style="display: block; margin: auto; width: 150px;">
+    <div id="version_txt" style="text-align: center; width: 100%; margin-top: 10px;">---</div>
     <div>&nbsp;</div>
     <table>
       <tr>
-        <td>
+        <td style="width: 40%;">
           <button onclick="launch('program')">Program</button>
         </td>
         <td>
@@ -63,6 +68,14 @@
         </td>
         <td>
           Plan and execute tasks.
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <button onclick="launch('drive')">Drive</button>
+        </td>
+        <td>
+          Manual remote control.
         </td>
       </tr>
       <tr>
