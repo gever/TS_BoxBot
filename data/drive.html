@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Boxbot Controller</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,6 +12,7 @@
             height: 100vh;
             background-color: #F3F3F3;
             margin: 0;
+            overflow: hidden; /* Prevent scrolling when interacting */
         }
         .controller {
             border: 1px solid #333;
@@ -38,9 +40,30 @@
             font-size: 16px;
             cursor: pointer;
             transition: background-color 0.3s;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            touch-action: manipulation; /* Improved touch behavior */
         }
         button:hover {
             background-color: #555;
+        }
+        
+        /* Scale UI for tablets and smaller screens */
+        @media (max-width: 768px) {
+            button {
+                padding: 25px 50px;
+                font-size: 24px;
+                margin: 15px;
+            }
+            .controller {
+                padding: 40px;
+            }
+            h2 {
+                font-size: 32px;
+                text-align: center;
+            }
         }
     </style>
 </head>
@@ -71,30 +94,86 @@
             fetch("/servoGo?pin=12&angle=" + angle);
         }
 
-        document.getElementById('fwd').addEventListener('click', function() {
-            console.log('Fwd');
-            fetch("/move?dist=" + DEFAULT_MOVE);
-        });
+        var activeCommand = null;
+        var isRunning = false;
+        var checkBusyTimeout = null;
 
-        document.getElementById('bwd').addEventListener('click', function() {
-            console.log('Bwd');
-            fetch("/move?dist=-" + DEFAULT_MOVE);
-        });
+        async function executeCommand() {
+            if (!isRunning || !activeCommand) return;
+            
+            try {
+                let busyRes = await fetch("/busy");
+                let busyData = await busyRes.json();
+                
+                if (!busyData.busy) {
+                    await fetch(activeCommand);
+                }
+            } catch(e) {
+                console.error("Error checking busy status:", e);
+            }
+            
+            if (isRunning) {
+                checkBusyTimeout = setTimeout(executeCommand, 50);
+            }
+        }
 
-        document.getElementById('left').addEventListener('click', function() {
-            console.log('Left');
-            fetch("/turn?angle=-" + DEFAULT_TURN);
-        });
+        function startCommand(cmdUrl) {
+            if (isRunning && activeCommand === cmdUrl) return;
+            isRunning = true;
+            activeCommand = cmdUrl;
+            clearTimeout(checkBusyTimeout);
+            executeCommand();
+        }
 
-        document.getElementById('right').addEventListener('click', function() {
-            console.log('Right');
-            fetch("/turn?angle=5");
-        });
-
-        document.getElementById('stop').addEventListener('click', function() {
-            console.log('Stopping');
+        function stopCommand() {
+            if (!isRunning) return;
+            isRunning = false;
+            activeCommand = null;
+            clearTimeout(checkBusyTimeout);
             fetch("/stop");
-        });
+        }
+
+        function bindButton(id, cmdUrl) {
+            var btn = document.getElementById(id);
+            if (!btn) return;
+            
+            var pressAction = function(e) {
+                e.preventDefault();
+                startCommand(cmdUrl);
+            };
+            
+            var releaseAction = function(e) {
+                e.preventDefault();
+                stopCommand();
+            };
+
+            // Mouse events
+            btn.addEventListener('mousedown', pressAction);
+            btn.addEventListener('mouseup', releaseAction);
+            btn.addEventListener('mouseleave', function(e) {
+                if (isRunning && activeCommand === cmdUrl) stopCommand();
+            });
+
+            // Touch events
+            btn.addEventListener('touchstart', pressAction, {passive: false});
+            btn.addEventListener('touchend', releaseAction, {passive: false});
+            btn.addEventListener('touchcancel', releaseAction, {passive: false});
+        }
+
+        bindButton('fwd', "/move?dist=" + DEFAULT_MOVE);
+        bindButton('bwd', "/move?dist=-" + DEFAULT_MOVE);
+        bindButton('left', "/turn?angle=-" + DEFAULT_TURN);
+        bindButton('right', "/turn?angle=" + DEFAULT_TURN);
+
+        // Explicit stop button handling
+        var stopBtn = document.getElementById('stop');
+        var manualStopAction = function(e) {
+            e.preventDefault();
+            stopCommand();
+            fetch("/stop"); // extra fetch just in case
+        };
+        stopBtn.addEventListener('mousedown', manualStopAction);
+        stopBtn.addEventListener('touchstart', manualStopAction, {passive: false});
 
         // Keyboard controls
         document.addEventListener('keydown', (event) => {
@@ -103,20 +182,23 @@
                 return;
             }
 
+            if (event.repeat) return; // ignore holding down key repeatedly firing keydown
+
             switch (event.code) {
                 case 'ArrowUp':
-                fetch("/move?dist=2");
+                startCommand("/move?dist=" + DEFAULT_MOVE);
                 break;
                 case 'ArrowDown':
-                fetch("/move?dist=-2");
+                startCommand("/move?dist=-" + DEFAULT_MOVE);
                 break;
                 case 'ArrowLeft':
-                fetch("/turn?angle=-5");
+                startCommand("/turn?angle=-" + DEFAULT_TURN);
                 break;
                 case 'ArrowRight':
-                fetch("/turn?angle=5");
+                startCommand("/turn?angle=" + DEFAULT_TURN);
                 break;
                 case 'Space':
+                stopCommand();
                 fetch("/stop");
                 break;
                 case 'Digit0':
@@ -149,6 +231,21 @@
                 case 'Digit9':
                     fetch("/servoGo?pin=12&angle=90");
                     break;
+            }
+        });
+
+        document.addEventListener('keyup', (event) => {
+            if (event.target.tagName === 'INPUT') {
+                return;
+            }
+
+            switch (event.code) {
+                case 'ArrowUp':
+                case 'ArrowDown':
+                case 'ArrowLeft':
+                case 'ArrowRight':
+                stopCommand();
+                break;
             }
         });
     </script>
