@@ -44,6 +44,7 @@ package: release
 # Install firmware to the device
 install:
 	pio run -e esp32dev --target upload
+	pio run --target uploadfs
 
 # Install release firmware to the device
 install-release:
