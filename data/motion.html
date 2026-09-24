@@ -52,9 +52,9 @@
             border-bottom: 3px solid #c8d0e8;
         }
         #topbar img { height: 44px; cursor: pointer; }
-        #topbar h1  { font-size: 1.4rem; color: #334; flex: 1; }
+        #topbar h1  { font-size: 2.0rem; color: #334; flex: 1; }
         #coms_status {
-            font-size: 0.85rem;
+            font-size: 1.5rem;
             color: #888;
         }
 
@@ -99,9 +99,8 @@
 
         /* Labels sit in their column, spanning only 1 column */
         .group-label {
-            font-size: 0.72rem;
+            font-size: 1.0rem;
             font-weight: bold;
-            letter-spacing: 0.07em;
             text-transform: uppercase;
             color: #556;
             padding: 0 4px 2px;
@@ -120,7 +119,7 @@
             padding: 0 8px;
             min-height: 52px;
             width: 100%;
-            font-size: 1.05rem;
+            font-size: 2.0rem;
             font-weight: bold;
             color: #222;
             box-shadow: 0 4px 0 rgba(0,0,0,0.18);
@@ -170,7 +169,7 @@
         }
 
         #path-title {
-            font-size: 1.0rem;
+            font-size: 2.0rem;
             font-weight: bold;
             color: #556;
             margin-bottom: 8px;
@@ -240,7 +239,7 @@
         }
 
         #plan-title {
-            font-size: 1.2rem;
+            font-size: 2.0rem;
             font-weight: bold;
             color: #334;
             margin-bottom: 8px;
@@ -250,7 +249,7 @@
             flex-shrink: 0;
         }
         #plan-title span.step-count {
-            font-size: 0.9rem;
+            font-size: 1.2rem;
             color: #778;
         }
 
@@ -272,7 +271,7 @@
             padding: 10px 16px;
             border-radius: var(--chip-radius);
             font-family: 'Arial Rounded MT Bold', Arial, sans-serif;
-            font-size: 1.05rem;
+            font-size: 2.0rem;
             font-weight: bold;
             color: #222;
             box-shadow: 0 2px 4px rgba(0,0,0,0.12);
@@ -321,7 +320,7 @@
             cursor: pointer;
             font-family: inherit;
             font-weight: bold;
-            font-size: 1rem;
+            font-size: 2.0rem;
             color: #222;
             box-shadow: 0 4px 0 rgba(0,0,0,0.15);
             transition: transform 0.08s, box-shadow 0.08s, filter 0.08s;
@@ -333,7 +332,7 @@
             box-shadow: 0 1px 0 rgba(0,0,0,0.15);
             filter: brightness(0.9);
         }
-        .action-icon { font-size: 1.6rem; line-height: 1; }
+        .action-icon { font-size: 1.5rem; line-height: 1; }
 
         #button_undo  { background: var(--undo-color);  border-bottom: 4px solid #c8a800; }
         #button_clear { background: var(--clear-color); border-bottom: 4px solid #c85050; }
@@ -342,16 +341,27 @@
         /* ── Scrollbar styling ── */
         #lines_of_code::-webkit-scrollbar { width: 6px; }
         #lines_of_code::-webkit-scrollbar-thumb { background: #bbc; border-radius: 3px; }
+
+        /* ── Toggle Preview State ── */
+        body.preview-hidden #path-panel {
+            display: none !important;
+        }
+        body.preview-hidden #command-list-panel {
+            width: auto;
+            flex: 1;
+            border-right: none;
+        }
     </style>
 </head>
 
-<body>
+<body class="preview-hidden">
 <div id="page">
 
     <!-- Top bar -->
     <div id="topbar">
         <img src="boxbot_icon.png" onclick="document.location='index.html'" alt="BoxBot">
         <h1>🤖 Movement Planner</h1>
+        <button id="toggle-preview-btn" onclick="togglePreview()" style="padding: 6px 12px; font-weight: bold; border-radius: 12px; border: none; background: #d8dcee; color: #334; cursor: pointer; margin-right: 12px; box-shadow: 0 2px 0 rgba(0,0,0,0.1);">🗺️ Show Preview</button>
         <span id="coms_status">…connecting</span>
     </div>
 
@@ -542,7 +552,7 @@
     // • Move commands  → emoji + label (textContent)
     // Raw command always stored in data-cmd for collect_code().
     function addLineOfCode(evt, id, bg_color) {
-        if (lines_of_code.childElementCount <= 9) {
+        if (lines_of_code.childElementCount <= 19) {
             confirmationAnimation(evt.target);
 
             const prefix = getPrefix(id);                    // e.g. "TRN_LT"
@@ -557,7 +567,7 @@
             if (prefix === "TRN_LT" || prefix === "TRN_RT") {
                 // Inject SVG arc — values are numeric so no injection risk
                 const dir = prefix === "TRN_LT" ? "left" : "right";
-                elem.innerHTML = makeTurnSVG(param, dir, 32)
+                elem.innerHTML = makeTurnSVG(param, dir, 64)
                     + `<span style="margin-left:7px">${label} ${param}\u00b0</span>`;
             } else {
                 // Plain text with emoji for forward/backward
@@ -874,6 +884,16 @@
     new ResizeObserver(() => drawPath()).observe(pathCanvas);
 
     updatePlanUI();
+
+    function togglePreview() {
+        const isHidden = document.body.classList.toggle("preview-hidden");
+        const btn = document.getElementById("toggle-preview-btn");
+        if (isHidden) {
+            btn.innerHTML = "🗺️ Show Preview";
+        } else {
+            btn.innerHTML = "🗺️ Hide Preview";
+        }
+    }
 </script>
 </body>
 </html>
