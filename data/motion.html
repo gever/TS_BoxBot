@@ -70,13 +70,14 @@
         #button-panel {
             display: flex;
             flex-direction: column;
-            padding: 10px 10px;
+            padding: 14px 16px;
             background: #e8ecf8;
             border-right: 3px solid #c8d0e8;
-            flex: 0 0 auto;
+            flex: 0 0 280px;
+            min-width: 280px;
             /* No overflow — all buttons must be fully visible */
             overflow: hidden;
-            gap: 6px;
+            gap: 8px;
         }
 
         /* Each half of the panel is a 2-column grid (fwd+bwd, or left+right) */
@@ -84,8 +85,8 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             grid-template-rows: auto;   /* label row + N button rows */
-            column-gap: 8px;
-            row-gap: 6px;
+            column-gap: 12px;
+            row-gap: 8px;
             flex: 1;                    /* top and bottom sections share space equally */
             min-height: 0;
         }
@@ -99,7 +100,7 @@
 
         /* Labels sit in their column, spanning only 1 column */
         .group-label {
-            font-size: 1.0rem;
+            font-size: 1.3rem;
             font-weight: bold;
             text-transform: uppercase;
             color: #556;
@@ -116,10 +117,10 @@
             border: none;
             border-radius: var(--btn-radius);
             cursor: pointer;
-            padding: 0 8px;
-            min-height: 52px;
+            padding: 0 10px;
+            min-height: 60px;
             width: 100%;
-            font-size: 2.0rem;
+            font-size: 2.4rem;
             font-weight: bold;
             color: #222;
             box-shadow: 0 4px 0 rgba(0,0,0,0.18);
@@ -314,7 +315,7 @@
             align-items: center;
             justify-content: center;
             gap: 4px;
-            height: 72px;
+            height: 96px;
             border: none;
             border-radius: var(--btn-radius);
             cursor: pointer;
@@ -332,7 +333,7 @@
             box-shadow: 0 1px 0 rgba(0,0,0,0.15);
             filter: brightness(0.9);
         }
-        .action-icon { font-size: 1.5rem; line-height: 1; }
+        .action-icon { font-size: 3.0rem; line-height: 1; }
 
         #button_undo  { background: var(--undo-color);  border-bottom: 4px solid #c8a800; }
         #button_clear { background: var(--clear-color); border-bottom: 4px solid #c85050; }
@@ -377,14 +378,14 @@
                 <div class="group-label">⬆️ Forward</div>
                 <div class="group-label">⬇️ Backward</div>
                 <!-- Row 1 -->
-                <div id="MOV_FWD_1"  class="panel_button fwd_style">1 step</div>
-                <div id="MOV_BWD_1"  class="panel_button bwd_style">1 step</div>
+                <div id="MOV_FWD_1"  class="panel_button fwd_style">1 cm</div>
+                <div id="MOV_BWD_1"  class="panel_button bwd_style">1 cm</div>
                 <!-- Row 2 -->
-                <div id="MOV_FWD_5"  class="panel_button fwd_style">5 steps</div>
-                <div id="MOV_BWD_5"  class="panel_button bwd_style">5 steps</div>
+                <div id="MOV_FWD_5"  class="panel_button fwd_style">5 cm</div>
+                <div id="MOV_BWD_5"  class="panel_button bwd_style">5 cm</div>
                 <!-- Row 3 -->
-                <div id="MOV_FWD_10" class="panel_button fwd_style">10 steps</div>
-                <div id="MOV_BWD_10" class="panel_button bwd_style">10 steps</div>
+                <div id="MOV_FWD_10" class="panel_button fwd_style">10cm</div>
+                <div id="MOV_BWD_10" class="panel_button bwd_style">10cm</div>
             </div>
 
             <hr class="section-divider">
@@ -487,68 +488,9 @@
         return parts[0] + "_" + parts[1];
     }
 
-    // ════════════════════════════════════════════════════════
-    //  TURN ARROW SVG GENERATOR
-    //
-    //  Draws a curved arc arrow whose sweep angle = the turn angle.
-    //   • 15° → barely-bent arc   • 90° → quarter circle
-    //   • 30° → gentle curve      • 180° → U-turn semicircle
-    //
-    //  Geometry:
-    //   - Robot enters from the bottom, heading north (up).
-    //   - Turning circle center is r units to the robot's left/right.
-    //   - Arc sweeps by `degrees`; arrowhead points in new heading.
-    // ════════════════════════════════════════════════════════
-    function makeTurnSVG(degrees, direction, size) {
-        size = size || 36;
-        const vb   = 40;          // internal viewBox units
-        const r    = 10;          // turning radius (viewBox units)
-        const sX   = vb / 2;      // 20 — start X (centre of viewBox)
-        const sY   = 28;          // start Y (turn point)
-        const sign = direction === "right" ? 1 : -1;
-        const rad  = degrees * Math.PI / 180;
-
-        // Centre of the turning circle (to the robot's right or left)
-        const cX = sX + sign * r;
-        const cY = sY;
-
-        // End point of the arc
-        const eX = cX - sign * r * Math.cos(rad);
-        const eY = cY - r * Math.sin(rad);
-
-        // Robot heading at end: (sinθ, −cosθ) for right; (−sinθ, −cosθ) for left
-        const hdX = sign * Math.sin(rad);
-        const hdY = -Math.cos(rad);
-
-        // Arrowhead barbs (two points ±36° off heading, drawn from tip)
-        const arrowLen = 7;
-        const spread   = Math.PI / 5;
-        function rot(x, y, a) {
-            // CW rotation in SVG (y-down) coordinate system
-            return [x * Math.cos(a) - y * Math.sin(a),
-                    x * Math.sin(a) + y * Math.cos(a)];
-        }
-        const [bl1x, bl1y] = rot(hdX, hdY, +spread);
-        const [br1x, br1y] = rot(hdX, hdY, -spread);
-        const barbL = [eX - arrowLen * bl1x, eY - arrowLen * bl1y];
-        const barbR = [eX - arrowLen * br1x, eY - arrowLen * br1y];
-
-        const f         = v => Math.round(v * 10) / 10;  // 1 dp
-        const largeArc  = degrees > 180 ? 1 : 0;
-        const sweepFlag = direction === "right" ? 1 : 0;
-
-        return `<svg viewBox="0 0 ${vb} ${vb}" width="${size}" height="${size}" `
-             + `xmlns="http://www.w3.org/2000/svg" `
-             + `style="display:inline-block;vertical-align:middle;flex-shrink:0">`
-             + `<path d="M ${f(sX)} ${f(sY)} A ${r} ${r} 0 ${largeArc} ${sweepFlag} ${f(eX)} ${f(eY)}" `
-             + `stroke="currentColor" stroke-width="3.2" fill="none" stroke-linecap="round"/>`
-             + `<polygon points="${f(eX)},${f(eY)} ${f(barbL[0])},${f(barbL[1])} ${f(barbR[0])},${f(barbR[1])}" `
-             + `fill="currentColor"/>`
-             + `</svg>`;
-    }
 
     // ── Override addLineOfCode ──
-    // • Turn commands  → SVG arc arrow + label (innerHTML, safe since values are numeric)
+    // • Turn commands  → emoji + label (textContent)
     // • Move commands  → emoji + label (textContent)
     // Raw command always stored in data-cmd for collect_code().
     function addLineOfCode(evt, id, bg_color) {
@@ -565,10 +507,9 @@
             elem.style.backgroundColor = bg_color;
 
             if (prefix === "TRN_LT" || prefix === "TRN_RT") {
-                // Inject SVG arc — values are numeric so no injection risk
-                const dir = prefix === "TRN_LT" ? "left" : "right";
-                elem.innerHTML = makeTurnSVG(param, dir, 64)
-                    + `<span style="margin-left:7px">${label} ${param}\u00b0</span>`;
+                // Plain text with arrow for left/right
+                const icon = prefix === "TRN_LT" ? "\u21a9\ufe0f" : "\u21aa\ufe0f";
+                elem.textContent = icon + "  " + label + " " + param + "\u00b0";
             } else {
                 // Plain text with emoji for forward/backward
                 const icon   = prefix === "MOV_FWD" ? "\u2b06\ufe0f" : "\u2b07\ufe0f";
@@ -616,10 +557,8 @@
     function initTurnButtonIcons() {
         document.querySelectorAll(".panel_button[id^='TRN_']").forEach(function(btn) {
             const parts = btn.id.split("_");         // ['TRN', 'LT'/'RT', degrees]
-            const dir   = parts[1] === "LT" ? "left" : "right";
             const deg   = parseInt(parts[2]);
-            btn.innerHTML = makeTurnSVG(deg, dir, 38)
-                + `<span style="margin-left:6px">${deg}\u00b0</span>`;
+            btn.textContent = deg + "\u00b0";
         });
     }
     initTurnButtonIcons();
@@ -677,32 +616,6 @@
         ctx.fill();
     }
 
-    // Draw a small curved arc showing a turn at (cx, cy)
-    function drawTurnArc(ctx, cx, cy, fromDeg, toDeg, color) {
-        const r   = 14;
-        // Canvas arc angles: 0 = east, so we subtract 90 to map north→0
-        const a1  = (fromDeg - 90) * Math.PI / 180;
-        const a2  = (toDeg   - 90) * Math.PI / 180;
-        const ccw = (toDeg - fromDeg) < 0; // left turn = counterclockwise
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, a1, a2, ccw);
-        ctx.strokeStyle = color;
-        ctx.lineWidth   = 2.5;
-        ctx.stroke();
-        // tiny arrowhead at end of arc
-        const endX = cx + r * Math.cos(a2);
-        const endY = cy + r * Math.sin(a2);
-        const tangentAngle = a2 + (ccw ? -Math.PI/2 : Math.PI/2);
-        ctx.beginPath();
-        ctx.moveTo(endX, endY);
-        ctx.lineTo(endX - 6 * Math.cos(tangentAngle - Math.PI/6),
-                   endY - 6 * Math.sin(tangentAngle - Math.PI/6));
-        ctx.lineTo(endX - 6 * Math.cos(tangentAngle + Math.PI/6),
-                   endY - 6 * Math.sin(tangentAngle + Math.PI/6));
-        ctx.closePath();
-        ctx.fillStyle = color;
-        ctx.fill();
-    }
 
     // Draw the robot icon: filled circle + white direction arrow
     function drawRobot(ctx, cx, cy, angleDeg) {
@@ -840,8 +753,6 @@
                 pathCtx.fillStyle = wp.color || "#888";
                 pathCtx.fill();
 
-            } else if (wp.type === "turn") {
-                drawTurnArc(pathCtx, p1.sx, p1.sy, wp.prevAngle, wp.angle, wp.color || "#aaa");
             }
 
             prev = wp;
